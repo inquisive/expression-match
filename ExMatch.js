@@ -221,7 +221,7 @@ _.extend(ExMatch.prototype, {
 			
 		}, this);
 		
-		if(this.debug || this.debugComparison) console.log(_.keys(this._match) + ' base return = ' + ret);
+		if(this.debug || this.debugComparison) console.log(_.keys(this._match) + ' final return = ' + ret);
 		
 		return ret;
 		
@@ -295,7 +295,7 @@ _.extend(ExMatch.prototype, {
 			}
 			
 			/* see if the value matches 
-			 * if we have a custom camparer run it
+			 * if we have a custom comparer run it
 			 * the custom comparer should excpect the test against variable first and test for variable second
 			 *  */
 			if(_.isFunction(this._current.$comparer)) {
@@ -321,58 +321,47 @@ _.extend(ExMatch.prototype, {
 	 */
 	and: function(pattern) {
 		if(!_.isObject(pattern)) return false;
-		
 		this.setSearchParams({$and: pattern});
-		
 		return this;
 	},
 	or: function(pattern) {
 		if(!_.isObject(pattern)) return false;
-		
 		this.setSearchParams({$or: pattern});
-		
 		return this;
 	},
 	not: function(pattern) {
 		if(!_.isObject(pattern)) return false;
-		
 		this.setSearchParams({$not: pattern});
-		
+		return this;
+	},
+	eq: function(pattern) {
+		if(!_.isObject(pattern)) return false;
+		this.setSearchParams({$eq: pattern});
 		return this;
 	},
 	lt: function(pattern) {
 		if(!_.isObject(pattern)) return false;
-		
 		this.setSearchParams({$lt: pattern});
-		
 		return this;
 	},
 	lte: function(pattern) {
 		if(!_.isObject(pattern)) return false;
-		
 		this.setSearchParams({$lte: pattern});
-		
 		return this;
 	},
 	gt: function(pattern) {
 		if(!_.isObject(pattern)) return false;
-		
 		this.setSearchParams({$gt: pattern});
-		
 		return this;
 	},
 	gte: function(pattern) {
 		if(!_.isObject(pattern)) return false;
-		
 		this.setSearchParams({$gte: pattern});
-		
 		return this;
 	},
 	regex: function(pattern) {
 		if(!_.isObject(pattern)) return false;
-		
 		this.setSearchParams({$regex: pattern});
-		
 		return this;
 	},
 	
@@ -495,6 +484,18 @@ _.extend(ExMatch.prototype, {
 				return !ret;
 			};
 			return this.$base.call(this,"$not",_.every,false,comparer);
+	},
+	/* not */
+	$eq: function() {
+			if(!_.isObject(this._search.$eq)) {
+				if(this.debug) console.log('Tried to run not without $and object set');
+				return false;
+			}
+			var comparer = function(a,b){
+				var ret = ( a == b );
+				return ret;
+			};
+			return this.$base.call(this,"$eq",_.every,false,comparer);
 	},
 	/* regex */
 	$regex: function() {
