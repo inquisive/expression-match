@@ -32,13 +32,15 @@ before(function() {
 		e66: { num2:{$eq:2} ,$eq:{num2:2},$eq:[{num2:2}]},
 		e7: { $not:{num2:1} },
 		e77: { str1: 'string',str3: {$regex: /plu.*/i}},
+		e777: { $any: [ {num3:{$lte:2}},{$and:[{str1:'string1'},{str2:'hello'}]},{$or: [{str3: {$regex: /plu.*/i}},{check1:false}] }]},
+		
 		/* false */
 		e8: { $or:[ {str1:['first','third']} , {check1:'false'} ] },
 		e9: { $and:[ {str1:'string'} , {check2:true} ] },
 		e10: { $gte:[ {num1:14} , {num3:1} ] },
 		e11: { $lt:[ {num1:3} , {num3:2} ] },
 		e12: { $or:[ {num1:{$gte:13}} , {num2:{$lte:1}} ] },
-		e13: { str1:'string4' },
+		e13: { str1:'stringa',str2:{$and:[{num1:1},{num2:2}]} },
 		e14: { $lte:{num2:1} },
 		e15: { num2:{$eq:2} ,$eq:{num2:2},$eq:[{num2:1}]},
 	}
@@ -76,8 +78,8 @@ describe('FALSE', function() {
 			m12 = undefined;
 		});
 		
-		it('plain should be false', function() {
-			var m13 = new ExMatch(searchPatterns.e13,searchFields).match();
+		it('array inside plain should be false', function() {
+			var m13 = new ExMatch(searchPatterns.e13,searchFields,false).match();
 			demand(m13).be.false();
 			m13 = undefined;
 		});
@@ -107,7 +109,7 @@ describe('TRUE', function() {
 		});
 		
 		it('$or should be true', function() {
-			var m1 = new ExMatch(searchPatterns.e1,searchFields,false).match();
+			var m1 = new ExMatch(searchPatterns.e1,searchFields,true).match();
 			demand(m1).be.true();
 			m1 = undefined;
 		});
@@ -160,11 +162,17 @@ describe('TRUE', function() {
 			m77 = undefined;
 		});
 		
+		it('$any include lte,or,and should be true', function() {
+			var m777 = new ExMatch(searchPatterns.e777,searchFields,false).match();
+			demand(m777).be.true();
+			m777 = undefined;
+		});
+		
 		it('miltiple expressions should be true', function() {
 			var m7 = new ExMatch({},searchFields,false);
 			m7.and({check2:false})
-				.or({check1:false})
-				.or({ str2: { $regex: 'hel.*/i'} });
+				.any({check1:false})
+				.any({ str2: { $regex: 'hel.*/i'} });
 			var m7r = m7.match();
 			demand(m7r).be.true();
 			m7 = undefined;
