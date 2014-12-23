@@ -30,7 +30,7 @@ before(function() {
 		e5: { $or:[ {num1:{$gte:1}} , {num2:{$lte:1}} ] },
 		e6: { num1:['3',1] },
 		e7: { $not:{num2:1} },
-		e77: { str1: { $regex: /str.*/i }},
+		e77: { str1: 'string',str3: {$regex: /plu.*/i}},
 		/* false */
 		e8: { $or:[ {str1:['first','third']} , {check1:'false'} ] },
 		e9: { $and:[ {str1:'string'} , {check2:true} ] },
@@ -41,6 +41,53 @@ before(function() {
 		e14: { $lte:{num2:1} }
 	}
 });
+
+describe('FALSE', function() {
+		
+		it('$or should be false', function() {
+			var m8 = new ExMatch(searchPatterns.e8,searchFields).match();
+			demand(m8).be.false();
+			m8 = undefined;
+		});
+		
+		it('$and should be false', function() {
+			var m9 = new ExMatch(searchPatterns.e9,searchFields).match();
+			demand(m9).be.false();
+			m9 = undefined;
+		});
+		
+		it('$gte should be false', function() {
+			var m10 = new ExMatch(searchPatterns.e10,searchFields).match();
+			demand(m10).be.false();
+			m10 = undefined;
+		});
+		
+		it('$lt should be false', function() {
+			var m11 = new ExMatch(searchPatterns.e11,searchFields).match();
+			demand(m11).be.false();
+			m11 = undefined;
+		});
+		
+		it('$or $gte should be false', function() {
+			var m12 = new ExMatch(searchPatterns.e12,searchFields).match();
+			demand(m12).be.false();
+			m12 = undefined;
+		});
+		
+		it('plain should be false', function() {
+			var m13 = new ExMatch(searchPatterns.e13,searchFields).match();
+			demand(m13).be.false();
+			m13 = undefined;
+		});
+		
+		it('plain $lte should be false', function() {
+			var m14 = new ExMatch(searchPatterns.e14,searchFields).match();
+			demand(m14).be.false();
+			m14 = undefined;
+		});
+		
+});
+
 
 describe('TRUE', function() {
 		
@@ -100,10 +147,10 @@ describe('TRUE', function() {
 		});
 		
 		it('add expressions should be true', function() {
-			var m7 = new ExMatch({},searchFields,false);
+			var m7 = new ExMatch({},searchFields,true);
 			m7.and({check2:false})
 				.or({check1:false})
-				.or({str3:'plug'});
+				.or({ str2: { $regex: 'hel.*/i'} });
 			var m7r = m7.match();
 			demand(m7r).be.true();
 			m7 = undefined;
@@ -114,48 +161,4 @@ describe('TRUE', function() {
 });
 	
 	
-describe('FALSE', function() {
-		
-		it('$or should be false', function() {
-			var m8 = new ExMatch(searchPatterns.e8,searchFields).match();
-			demand(m8).be.false();
-			m8 = undefined;
-		});
-		
-		it('$and should be false', function() {
-			var m9 = new ExMatch(searchPatterns.e9,searchFields).match();
-			demand(m9).be.false();
-			m9 = undefined;
-		});
-		
-		it('$gte should be false', function() {
-			var m10 = new ExMatch(searchPatterns.e10,searchFields).match();
-			demand(m10).be.false();
-			m10 = undefined;
-		});
-		
-		it('$lt should be false', function() {
-			var m11 = new ExMatch(searchPatterns.e11,searchFields).match();
-			demand(m11).be.false();
-			m11 = undefined;
-		});
-		
-		it('$or $gte should be false', function() {
-			var m12 = new ExMatch(searchPatterns.e12,searchFields).match();
-			demand(m12).be.false();
-			m12 = undefined;
-		});
-		
-		it('plain should be false', function() {
-			var m13 = new ExMatch(searchPatterns.e13,searchFields).match();
-			demand(m13).be.false();
-			m13 = undefined;
-		});
-		
-		it('plain $lte should be false', function() {
-			var m14 = new ExMatch(searchPatterns.e14,searchFields).match();
-			demand(m14).be.false();
-			m14 = undefined;
-		});
-		
-});
+
