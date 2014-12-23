@@ -1,6 +1,6 @@
 var demand = require('must');
 
-var ExMatch = require('../fields/components/ExMatch');
+var ExMatch = require('../ExMatch');
 
 var searchFields,searchPatterns;
 
@@ -17,20 +17,21 @@ before(function() {
 		num2: '2',
 		num3: '3',
 		check1:'true',
-		check2: 'false'
+		check2: false
 	}
 	
 	searchPatterns = {
 		/* true */
-		e1: { $or:[ {str1:['first','third']} , {check1:true} ] },
+		e0: { $or:[ {str1:['string1']} , {check1:'true'} ] ,num2:'2',num1:{$lt:2}},
+		e1: { $or:[ {str1:['string','third']} , {check1:'false'} ] },
 		e2: { $and:[ {str1:'string'} , {check2:false} ] },
 		e3: { $lte:[ {num1:1} , {num3:4} ] },
 		e4: { $gt:[{num3:1}],$and:[{num1:1},{str2:'hello'},{num2:{$lt:4}}] },
 		e5: { $or:[ {num1:{$gte:1}} , {num2:{$lte:1}} ] },
-		e6: { str1:'string' },
+		e6: { str1:['string','third'] },
 		e7: { $lt:{num2:3} },
 		/* false */
-		e8: { $or:[ {str1:['first','third']} , {check1:false} ] },
+		e8: { $or:[ {str1:['first','third']} , {check1:'false'} ] },
 		e9: { $and:[ {str1:'string'} , {check2:true} ] },
 		e10: { $gte:[ {num1:14} , {num3:1} ] },
 		e11: { $lt:[ {num1:3} , {num3:2} ] },
@@ -42,14 +43,21 @@ before(function() {
 
 describe('TRUE', function() {
 		
+		it('$or then plain $and should be true', function() {
+			/* debug is true instead of false in ExMatch */
+			var m0 = new ExMatch(searchPatterns.e0,searchFields,false).match();
+			demand(m0).be.true();
+			m0 = undefined;
+		});
+		
 		it('$or should be true', function() {
-			var m1 = new ExMatch(searchPatterns.e1,searchFields).match();
+			var m1 = new ExMatch(searchPatterns.e1,searchFields,false).match();
 			demand(m1).be.true();
 			m1 = undefined;
 		});
 		
 		it('$and should be true', function() {
-			var m2 = new ExMatch(searchPatterns.e2,searchFields,true).match();
+			var m2 = new ExMatch(searchPatterns.e2,searchFields,false).match();
 			demand(m2).be.true();
 			m2 = undefined;
 		});
@@ -60,7 +68,7 @@ describe('TRUE', function() {
 			m3 = undefined;
 		});
 		
-		it('$lt $and should be true', function() {
+		it('$gt $and should be true', function() {
 			var m4 = new ExMatch(searchPatterns.e4,searchFields).match();
 			demand(m4).be.true();
 			m4 = undefined;
@@ -72,7 +80,7 @@ describe('TRUE', function() {
 			m5 = undefined;
 		});
 		
-		it('plain should be true', function() {
+		it('plain array should be true', function() {
 			var m6 = new ExMatch(searchPatterns.e6,searchFields).match();
 			demand(m6).be.true();
 			m6 = undefined;

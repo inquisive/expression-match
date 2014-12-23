@@ -1,7 +1,4 @@
-var _ = require ('underscore');
-
-/* Expression RegEx */
-var RegEx = /^\$[A-Za-z]+$/;
+var _ = require ('lodash');
 
 /**
  * Calling the module directly returns a new ExMatch instance
@@ -22,44 +19,45 @@ exports = module.exports = function(match, values, debug) {
  */
 var ExMatch = exports.ExMatch = function ExMatch(match, values, debug) {
 	
-	// Ensure a new instance has been created.
-	// Calling Wrapper as a function will return a new instance instead.
+	/* Ensure a new instance has been created.
+	 * Calling Wrapper as a function will return a new instance instead.
+	 * */
 	if (!(this instanceof ExMatch)) {
 		return new ExMatch(match, values, debug);
 	}
  
-	// If not a match assume true
+	/*If there is not a match object assume true */
 	if (!_.isObject(match)) {
 		return true;
 	}
-	// If not values assume false
+	/* If not values assume false */
 	if (!_.isObject(values)) {
 		return false;
 	}
 	
 	this.debug = debug || false;
 	
-	// container for expression comparers
+	/* container for expression comparers */
 	this._search = {};
 	
+	/* default expression will always be $and if not provided */
 	this.expression = '$and';
 	
 	/* save the search fields */
 	this.searchFields = values;
 	
 	/* loop through the match object and push _search with expression objects
-	 * plain objects are added into a single and expression
+	 * objects not assigned to an expression are added into a single $and expression
 	 * */
 	this.setSearchParams(match);
 	
-	//if(debug) console.log('_search Array', this._search, 'search field:value ', this.searchFields);
+	if(debug) console.log('_search Array', this._search, 'search field:value ', this.searchFields);
 	
 	return this;
 
 };
 
 _.extend(ExMatch.prototype, {
-	
 	/**
 	 * check if value is an Expression
 	 * @param  {string} value
@@ -69,10 +67,14 @@ _.extend(ExMatch.prototype, {
 	
 		if(!_.isString(key))return false;
 		
+		/* Expression RegEx */
+		var RegEx = /^\$[A-Za-z]+$/;
+		
 		/* match single word beginning with $ */
 		var ret = key.match(RegEx);
 		
 		return  _.isObject(ret)  ? ret[0] : false;	
+		
 	},
 	
 	/**
@@ -85,8 +87,9 @@ _.extend(ExMatch.prototype, {
 		/* If we dont have an object  are we still true since we did naything false? */
 		if(!_.isObject(match))return true;
 		
-		// we want to push an object with a key: searchFields value
-		// the object key can be another expression which will be formed	
+		/* we want to push an object with a key: searchFields value
+		 * the object key can be another expression which will be formed	
+		 * */
 		var pushVal = function(exp,obj,parentKey) {
 			
 			var key = _.keys(obj)[0];
@@ -131,12 +134,12 @@ _.extend(ExMatch.prototype, {
 			
 			var exp = this.isExp(key);
 
-			// check for an expression
+			/* check for an expression */
 			if(!exp) exp = '$and';
 			
 			this.expression = exp;
 			
-			// set the search object
+			/* set the search object */
 			if(!this._search[exp]) {
 				this._search[exp] = {
 					search:[],
@@ -145,8 +148,8 @@ _.extend(ExMatch.prototype, {
 			} else {
 				this._search[exp].exp = exp;
 			}
-			/* we accept arrays so loop through and add each object to the routine */
-			if(_.isArray(val)) {
+			/* we accept arrays for expressions so loop through and add each object to the routine */
+			if(_.isArray(val) && this.isExp(key)) {
 				if(this.debug) console.log('val isArray so loop',val);
 				_.each(val,function(obj) {
 					if(!_.isObject(obj)) {
@@ -160,15 +163,15 @@ _.extend(ExMatch.prototype, {
 					
 				}, this);
 				
-			} else if(!_.isObject(val)) {
+			} else if(_.isArray(val) || !_.isObject(val)) {
 				/* we can accept plain objects so wrap it back up */
 				var retObj = {}
 				retObj[key] = val;
 				pushVal(exp,retObj,key);
-				if(this.debug) console.log('push non object',retObj);
+				if(this.debug) console.log('push plain object',retObj);
 				
 			} else if(val) {
-				if(this.debug) console.log('push val',val);
+				if(this.debug) console.log('push object, might be a new expression',val);
 				pushVal(exp,val,key);
 			}
 			
@@ -182,24 +185,24 @@ _.extend(ExMatch.prototype, {
 	 * match gives you the result of an ExMatch instance
 	 * return boolean
 	 */
-	
 	match: function() {
 	
-		/* If we dont have a _search object  are we still true since we did naything false? */
-		if(!this.expression || this.expression.charAt(0) !== '$')return true;
+		/* If we dont have a _search object  are we still true?  since we did naything false? */
 		if(!_.isObject(this._search))return true;
 		if(!this.searchFields)return false;
 		
 		/* loop the _search object and run all the requested searches */
 		return _.every(this._search,function(val) {		
-			return val.exp !== false ? this[val.exp]() : false;
+			if(!_.isArray(val.search) || val.search.length < 1)return true;
+			if(val.exp === false || !_.isFunction(this[val.exp]) )return true;
+			return this[val.exp]();
 		}, this);
-	},
+	}, 
 	
 	/**
 	 * DEFAULT
 	 * selector runs the selected true/false group return comparison method
-	 * eg: _.every or _.some
+	 * eg: _.every or _.some                                                                                                                                                                                                                                   
 	 * @param  {function} group comparison method
 	 * @param  {object} the search pattern object
 	 * 				exp: name of the expression
@@ -209,21 +212,22 @@ _.extend(ExMatch.prototype, {
 	 * @param  {object} field:value object to test against
 	 * return boolean
 	 */
-	 
 	 selector: function(fn,search,searchFields){
 		var ret = fn(search.search,function(val) {
 			
 			/* we pass this as reference the entire chain so save our originals */
 			this.searchFields = searchFields;
 			this.search = val;
+			this.expression = search.exp;
+			
 			/* run the proper method and return*/
 			var ret2 =  fn(val, search.$comparer, this);
-			if(this.debug) console.log(this.expression, 'fn selector', search.search, ret2);
+			if(this.debug) console.log(search.exp, 'fn selector', search.search, ret2);
 			return ret2;
 			
 		}, this);
 		
-		if(this.debug) console.log(this.expression,'return selector',ret);
+		if(this.debug) console.log(search.exp,'return selector',ret);
 		return ret;
 	},
 	
@@ -235,253 +239,133 @@ _.extend(ExMatch.prototype, {
 	 * @param  {string} key
 	 * return boolean
 	 */
-	
 	comparer: function(val,key) {
-	
+		
 		/* we want an Array of objects */	
 		var matches = _.isArray(val) ? val : [val];
-		if(this.debug) console.info('COMPARE: does ', matches, ' contain "',  this.searchFields[key], '" from ',  key, _.contains(matches, this.searchFields[key]));
+		
+		if(this.debug & key !== '$match') console.info('COMPARE: does ', matches, ' contain "',  this.searchFields[key], '" from ',  key, _.contains(matches, this.searchFields[key]));
 		
 		if(key === '$match') {
 			/* $match keys contain a new ExMatch instance so run match */
 			if(this.debug) console.log(this.expression,'run ExMatch instance match()');
 			return val.match();
+			
 		} else {
 			/* see if the value matches */
-			var ret = _.find(matches, function(val) { 
-				/* set true and false since our values are strings */
-				if(val === true) val = 'true';
-				
-				if(!val || val === false) return this.searchFields[key] != 'true';
-				if(val) return val == this.searchFields[key];
-				return false;
-				
-			}.bind(this), this);
-			//if(this.debug) console.log(this.expression,'return compare',ret);
-			return ret;
-		}
+			return _.contains(matches, this.searchFields[key]);
 			
+		}	
 	},
-	
 	
 	/* START EXPRESSION METHODS */
-		
 	/**
-	 * greater than
-	 * provide a custom comparer if one is not already set
+	 * base comparison method
 	 * @param  {function} comparer function
 	 * @param  {function} selector function
 	 * return boolean
 	 */
-	
-	$gt: function(comparer,selector) {
-	
-		var exp = this._search.$gt;
-		
-		var $selector = (_.isFunction(exp.$selector)) ? exp.$selector : selector;
-		var $comparer = (_.isFunction(exp.$comparer)) ? exp.$comparer : comparer;
-		
-		if(!_.isFunction($comparer)) {
-			exp.$comparer = function(val,key){
-				return Number(this.searchFields[key]) > Number(val);
-			}.bind(this);
-		}
-		
-		if(!_.isFunction($selector)) {
-			exp.$selector = this.selector;
-		}
-		
-		var sel = exp.$selector.call(this, _.every, exp, this.searchFields);
-		
-		if(this.debug) console.log(this.expression,'gt return',sel);
-		
-		return sel;
-	},
-	
-	/**
-	 * greater than or equal to
-	 * provide a custom comparer if one is not already set
-	 * @param  {function} comparer function
-	 * @param  {function} selector function
-	 * return boolean
-	 */
-	
-	$gte: function(comparer,selector) {
-	
-		var exp = this._search.$gte;
-		
-		var $selector = (_.isFunction(exp.$selector)) ? exp.$selector : selector;
-		var $comparer = (_.isFunction(exp.$comparer)) ? exp.$comparer : comparer;
-		
-		if(!_.isFunction($comparer)) {
-			exp.$comparer = function(val,key){
-				return Number(this.searchFields[key]) >= Number(val);
-			}.bind(this);
-		}
-		
-		if(!_.isFunction($selector)) {
-			exp.$selector = this.selector;
-		}
-		
-		var sel = exp.$selector.call(this, _.every, exp, this.searchFields);
-		
-		if(this.debug) console.log(this.expression,'gte return',sel);
-		
-		return sel;
-	},
-	
-	/**
-	 * less than
-	 * provide a custom comparer if one is not already set
-	 * @param  {function} comparer function
-	 * @param  {function} selector function
-	 * return boolean
-	 */
-	
-	$lt: function(comparer,selector) {
-	
-		var exp = this._search.$lt;
-		
-		var $selector = (_.isFunction(exp.$selector)) ? exp.$selector : selector;
-		var $comparer = (_.isFunction(exp.$comparer)) ? exp.$comparer : comparer;
-		
-		if(!_.isFunction($comparer)) {
-			exp.$comparer = function(val,key){
-				return Number(this.searchFields[key]) <  Number(val);
-			}.bind(this);
-		}
-		
-		if(!_.isFunction($selector)) {
-			exp.$selector = this.selector;
-		}
-		
-		var sel = exp.$selector.call(this, _.every, exp, this.searchFields);
-		
-		if(this.debug) console.log(this.expression,'lt return',sel);
-		
-		return sel;
-	},
-	
-	/**
-	 * less than or equal to
-	 * provide a custom comparer if one is not already set
-	 * @param  {function} comparer function
-	 * @param  {function} selector function
-	 * return boolean
-	 */
-	
-	$lte: function(comparer,selector) {
-	
-		var exp = this._search.$lte;
-		
-		var $selector = (_.isFunction(exp.$selector)) ? exp.$selector : selector;
-		var $comparer = (_.isFunction(exp.$comparer)) ? exp.$comparer : comparer;
-		
-		if(!_.isFunction($comparer)) {
-			exp.$comparer = function(val,key){
-				if(this.debug) console.log('$lte', Number(this.searchFields[key]), Number(val));
-				return Number(this.searchFields[key])  <=  Number(val);
-			}.bind(this);
-		}
-		
-		if(!_.isFunction($selector)) {
-			exp.$selector = this.selector;
-		}
-		
-		var sel = exp.$selector.call(this, _.every, exp, this.searchFields);
-		
-		if(this.debug) console.log(this.expression,'lte return',sel);
-		
-		return sel;
-	},
-	
-	/**
-	 * and - all must be true
-	 * @param  {function} comparer function
-	 * @param  {function} selector function
-	 * return boolean
-	 */
-	
-	$and: function(comparer,selector) {
-	
-		var exp = this._search.$and;
-		
-		var $selector = (_.isFunction(exp.$selector)) ? exp.$selector : selector;
-		var $comparer = (_.isFunction(exp.$comparer)) ? exp.$comparer : comparer;
-		
-		if(!_.isFunction($comparer)) {
-			exp.$comparer = this.comparer;
-		}
-		
-		if(!_.isFunction($selector)) {
-			exp.$selector = this.selector;
-		}
-		
-		var sel = exp.$selector.call(this, _.every, exp, this.searchFields);
-		
-		if(this.debug) console.log(this.expression,'and return',sel);
-		
-		return sel;
-	},
-	
-	/**
-	 * or - one must be true
-	 * @param  {function} comparer function
-	 * @param  {function} selector function
-	 * return boolean
-	 */
-	
-	$or: function(comparer,selector) {
-	
-		var exp = this._search.$or;
-		
-		var $selector = (_.isFunction(exp.$selector)) ? exp.$selector : selector;
-		var $comparer = (_.isFunction(exp.$comparer)) ? exp.$comparer : comparer;
-		
-		if(!_.isFunction($comparer)) {
-			exp.$comparer = this.comparer;
-		}
-		
-		if(!_.isFunction($selector)) {
-			exp.$selector = this.selector;
-		}
-		
-		var sel = exp.$selector.call(this, _.some, exp, this.searchFields);
-		
-		if(this.debug) console.log(this.expression,'or return',sel);
-		
-		return sel;
-	},
-	
-	/**
-	 * I need a base to clean some code up
-	 * @param  {function} comparer function
-	 * @param  {function} selector function
-	 * return boolean
-	 */
-	
-	$base: function $base(exp) {
-	
-		return function(comparer,selector) {
-			
+	$base: function (exp, fn, selector, comparer) {
+				
 			var exp = this._search[exp];
-			var $selector = (_.isFunction(exp.$selector)) ? exp.$selector : selector;
-			var $comparer = (_.isFunction(exp.$comparer)) ? exp.$comparer : comparer;
 			
-			if(!_.isFunction($comparer)) {
-				exp.$comparer = this.comparer;
+			if(!exp || exp.length < 1)return true;
+			
+			if(!fn) fn = _.every;
+						
+			if(!_.isFunction(exp.$comparer)) {
+				if(comparer) exp.$comparer = comparer;
+				else exp.$comparer = this.comparer;
 			}
 			
-			if(!_.isFunction($selector)) {
-				exp.$selector = this.selector;
+			if(!_.isFunction(exp.$selector)) {
+				if(selector) exp.$selector = selector;
+				else exp.$selector = this.selector;
 			}
 			
-			var sel = exp.$selector.call(this, _.every, exp, this.searchFields);
+			/* run the selector */
+			var sel = exp.$selector.call(this, fn, exp, this.searchFields);
 			
-			if(this.debug) console.log(this.expression,'or return',sel);
+			if(this.debug) console.log(exp.exp,' base return ',sel);
 			
 			return sel;
-		}
+		
 	},
+		
+	/**
+	 * Expression comparers
+	 * provide a loop function if not _.every
+	 * @param  {string} expression
+	 * @param  {function} loop true/false function
+	 * @param  {function} selector function
+	 * @param  {function} comparer function
+	 * return boolean
+	 */
+	/* greater than */
+	$gt: function() {
+			if(!_.isObject(this._search.$gt)) {
+				if(this.debug) console.log('Tried to run gt without $gt object set');
+				return false;
+			}
+			var comparer = function(val,key){
+				return Number(this.searchFields[key]) >  Number(val);
+			}.bind(this);
+			
+			return this.$base.call(this,"$gt",false,false,comparer);
+	},
+	/* greater than or equal*/
+	$gte: function() {
+			if(!_.isObject(this._search.$gte)) {
+				if(this.debug) console.log('Tried to run gte without $gte object set');
+				return false;
+			}
+			var comparer = function(val,key){
+				return Number(this.searchFields[key]) >=  Number(val);
+			}.bind(this);
+			
+			return this.$base.call(this,"$gte",false,false,comparer);
+	},
+	/* less than */
+	$lt: function() {
+			if(!_.isObject(this._search.$lt)) {
+				if(this.debug) console.log('Tried to run lt without $lt object set');
+				return false;
+			}
+			var comparer = function(val,key){
+				return Number(this.searchFields[key]) <  Number(val);
+			}.bind(this);
+			
+			return this.$base.call(this,"$lt",false,false,comparer);
+	},
+	/* less than or equal */
+	$lte: function() {
+			if(!_.isObject(this._search.$lte)) {
+				if(this.debug) console.log('Tried to run lte without $lte object set');
+				return false;
+			}
+			var comparer = function(val,key){
+				return Number(this.searchFields[key]) <=  Number(val);
+			}.bind(this);
+			
+			return this.$base.call(this,"$lte",false,false,comparer);
+	},
+	/* or */
+	$or: function() {
+			if(!_.isObject(this._search.$or)) {
+				if(this.debug) console.log('Tried to run or without $or object set');
+				return false;
+			}
+			
+			return this.$base.call(this,"$or",_.some);
+	},
+	/* and */
+	$and: function() {
+			if(!_.isObject(this._search.$and)) {
+				if(this.debug) console.log('Tried to run and without $and object set');
+				return false;
+			}
+			
+			return this.$base.call(this,"$and");
+	}	
 	
 });
