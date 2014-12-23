@@ -378,6 +378,20 @@ _.extend(ExMatch.prototype, {
 		this.setSearchParams({$regex: pattern});
 		return this;
 	},
+	reset: function(exp) {
+		if(exp) {
+			if(_.isObject(this._search[exp]))this._search[exp] = {};
+		} else {
+			this._search = {};
+			this.expression = '$and';
+			this.searchFields = {};
+			this._match = {};
+			this._current = {};
+			this.debug = false;
+			this._debug = false;
+			this.debugComparison = false;
+		}
+	},
 	
 	/* START EXPRESSION METHODS */
 	/**
