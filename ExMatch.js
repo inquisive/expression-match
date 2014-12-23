@@ -309,6 +309,13 @@ _.extend(ExMatch.prototype, {
 		
 		return this;
 	},
+	not: function(pattern) {
+		if(!_.isObject(pattern)) return false;
+		
+		this.setSearchParams({$not: pattern});
+		
+		return this;
+	},
 	lt: function(pattern) {
 		if(!_.isObject(pattern)) return false;
 		
@@ -447,6 +454,18 @@ _.extend(ExMatch.prototype, {
 			}
 			
 			return this.$base.call(this,"$and");
-	}	
+	},
+	/* and */
+	$not: function() {
+			if(!_.isObject(this._search.$not)) {
+				if(this.debug) console.log('Tried to run not without $and object set');
+				return false;
+			}
+			var comparer = function(a,b){
+				var ret = _.contains(b, a);
+				return !ret;
+			};
+			return this.$base.call(this,"$not",_.every,false,comparer);
+	}		
 	
 });

@@ -29,7 +29,7 @@ before(function() {
 		e4: { $gt:[{num3:1}],$and:[{num1:1},{str2:'hello'},{num2:{$lt:4}}] },
 		e5: { $or:[ {num1:{$gte:1}} , {num2:{$lte:1}} ] },
 		e6: { str1:['string','third'] },
-		e7: { $lt:{num2:3} },
+		e7: { $not:{num2:1} },
 		/* false */
 		e8: { $or:[ {str1:['first','third']} , {check1:'false'} ] },
 		e9: { $and:[ {str1:'string'} , {check2:true} ] },
@@ -86,7 +86,7 @@ describe('TRUE', function() {
 			m6 = undefined;
 		});
 		
-		it('plain $lte should be true', function() {
+		it('not should be true', function() {
 			var m7 = new ExMatch(searchPatterns.e7,searchFields).match();
 			demand(m7).be.true();
 			m7 = undefined;
