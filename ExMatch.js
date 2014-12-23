@@ -148,9 +148,12 @@ _.extend(ExMatch.prototype, {
 			} else {
 				this._search[exp].exp = exp;
 			}
+			
 			/* we accept arrays for expressions so loop through and add each object to the routine */
 			if(_.isArray(val) && this.isExp(key)) {
+				
 				if(this.debug) console.log('val isArray so loop',val);
+				
 				_.each(val,function(obj) {
 					if(!_.isObject(obj)) {
 						/* this is a string in an Array so we assume it is a field name that should be boolean true */
@@ -164,7 +167,8 @@ _.extend(ExMatch.prototype, {
 				}, this);
 				
 			} else if(_.isArray(val) || !_.isObject(val)) {
-				/* we can accept plain objects so wrap it back up */
+				
+				/* we can accept plain objects which are now just a value so wrap it back up */
 				var retObj = {}
 				retObj[key] = val;
 				pushVal(exp,retObj,key);
