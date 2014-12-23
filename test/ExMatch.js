@@ -92,6 +92,17 @@ describe('TRUE', function() {
 			m7 = undefined;
 		});
 		
+		it('add expressions should be true', function() {
+			var m7 = new ExMatch({},searchFields,false);
+			m7.and({check2:false})
+				.or({check1:false})
+				.or({str3:'plug'});
+			var m7r = m7.match();
+			demand(m7r).be.true();
+			m7 = undefined;
+			m7r = undefined;
+		});
+		
 });
 	
 	
