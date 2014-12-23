@@ -28,8 +28,9 @@ before(function() {
 		e3: { $lte:[ {num1:1} , {num3:4} ] },
 		e4: { $gt:[{num3:1}],$and:[{num1:1},{str2:'hello'},{num2:{$lt:4}}] },
 		e5: { $or:[ {num1:{$gte:1}} , {num2:{$lte:1}} ] },
-		e6: { str1:['string','third'] },
+		e6: { num1:['3',1] },
 		e7: { $not:{num2:1} },
+		e77: { str1: { $regex: /str.*/i }},
 		/* false */
 		e8: { $or:[ {str1:['first','third']} , {check1:'false'} ] },
 		e9: { $and:[ {str1:'string'} , {check2:true} ] },
@@ -69,19 +70,19 @@ describe('TRUE', function() {
 		});
 		
 		it('$gt $and should be true', function() {
-			var m4 = new ExMatch(searchPatterns.e4,searchFields).match();
+			var m4 = new ExMatch(searchPatterns.e4,searchFields,false).match();
 			demand(m4).be.true();
 			m4 = undefined;
 		});
 		
 		it('$or $gte should be true', function() {
-			var m5 = new ExMatch(searchPatterns.e5,searchFields).match();
+			var m5 = new ExMatch(searchPatterns.e5,searchFields,false).match();
 			demand(m5).be.true();
 			m5 = undefined;
 		});
 		
 		it('plain array should be true', function() {
-			var m6 = new ExMatch(searchPatterns.e6,searchFields).match();
+			var m6 = new ExMatch(searchPatterns.e6,searchFields,false).match();
 			demand(m6).be.true();
 			m6 = undefined;
 		});
@@ -90,6 +91,12 @@ describe('TRUE', function() {
 			var m7 = new ExMatch(searchPatterns.e7,searchFields).match();
 			demand(m7).be.true();
 			m7 = undefined;
+		});
+		
+		it('regex should be true', function() {
+			var m77 = new ExMatch(searchPatterns.e77,searchFields,false).match();
+			demand(m77).be.true();
+			m77 = undefined;
 		});
 		
 		it('add expressions should be true', function() {
@@ -102,6 +109,7 @@ describe('TRUE', function() {
 			m7 = undefined;
 			m7r = undefined;
 		});
+		
 		
 });
 	

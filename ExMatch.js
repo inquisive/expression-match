@@ -106,15 +106,18 @@ _.extend(ExMatch.prototype, {
 				/* this is a new expression so we will create an object with a $match key
 				 * and place a new MatchEx instance as the value
 				 * */
-				var newKey = this.isExp(key) ? key : _.keys(obj[key])[0];		
-				var newObj = _.isObject(obj[key]) ? obj[key] : {};
+				var newKey = this.isExp(key) ? key : _.keys(obj[key])[0];	
+				var isObject = ( !_.isRegExp(obj[key]) && _.isObject(obj[key]) );	
+				var newObj = ( isObject ) ? obj[key] : {};
+				
 				if(!_.isObject(newObj[newKey])) {
 					/* this is a string or number 
 					 * switch up the parent key and the expression
 					 * and wrap it in an Array
 					 * */
+					if(this.debug) console.log(key,newKey,newObj,parentKey,_.isObject(obj[key]));
 					var pushIt = {};
-					pushIt[_.isObject(obj[key]) ? key : parentKey] = _.isObject(obj[key]) ? obj[key][newKey] : obj[newKey];
+					pushIt[isObject ? key : parentKey] = isObject ? obj[key][newKey] : obj[newKey];
 					var newObj = {}
 					newObj[newKey] = [];
 					newObj[newKey].push(pushIt);
@@ -160,7 +163,7 @@ _.extend(ExMatch.prototype, {
 						obj = ret;
 					}
 					
-					pushVal(exp,obj);
+					pushVal(exp,obj,key);
 					
 				}, this);
 				
@@ -455,7 +458,7 @@ _.extend(ExMatch.prototype, {
 			
 			return this.$base.call(this,"$and");
 	},
-	/* and */
+	/* not */
 	$not: function() {
 			if(!_.isObject(this._search.$not)) {
 				if(this.debug) console.log('Tried to run not without $and object set');
@@ -466,6 +469,17 @@ _.extend(ExMatch.prototype, {
 				return !ret;
 			};
 			return this.$base.call(this,"$not",_.every,false,comparer);
+	},
+	/* regex */
+	$regex: function() {
+			if(!_.isObject(this._search.$regex)) {
+				if(this.debug) console.log('Tried to run not without $regex object set');
+				return false;
+			}
+			var comparer = function(a,b){
+				return new RegExp(b).test(a);
+			};
+			return this.$base.call(this,"$regex",_.every,false,comparer);
 	}		
 	
 });
