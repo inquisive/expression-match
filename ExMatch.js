@@ -137,8 +137,6 @@ _.extend(ExMatch.prototype, {
 			/* check for an expression */
 			if(!exp) exp = '$and';
 			
-			this.expression = exp;
-			
 			/* set the search object */
 			if(!this._search[exp]) {
 				this._search[exp] = {
@@ -197,9 +195,13 @@ _.extend(ExMatch.prototype, {
 		
 		/* loop the _search object and run all the requested searches */
 		return _.every(this._search,function(val) {		
+			
 			if(!_.isArray(val.search) || val.search.length < 1)return true;
+			
 			if(val.exp === false || !_.isFunction(this[val.exp]) )return true;
+			
 			return this[val.exp]();
+			
 		}, this);
 	}, 
 	
@@ -222,7 +224,6 @@ _.extend(ExMatch.prototype, {
 			/* we pass this as reference the entire chain so save our originals */
 			this.searchFields = searchFields;
 			this.search = val;
-			this.expression = search.exp;
 			
 			/* run the proper method and return*/
 			var ret2 =  fn(val, search.$comparer, this);
@@ -248,14 +249,19 @@ _.extend(ExMatch.prototype, {
 		/* we want an Array of objects */	
 		var matches = _.isArray(val) ? val : [val];
 		
-		if(this.debug & key !== '$match') console.info('COMPARE: does ', matches, ' contain "',  this.searchFields[key], '" from ',  key, _.contains(matches, this.searchFields[key]));
-		
 		if(key === '$match') {
 			/* $match keys contain a new ExMatch instance so run match */
 			if(this.debug) console.log(this.expression,'run ExMatch instance match()');
 			return val.match();
 			
 		} else {
+			
+			if(this.searchFields[key] === undefined) {
+				if(this.debug) console.info('SKIP COMPARE: searchFields[key] = ', this.searchFields[key]);
+				return false;
+			}
+			if(this.debug) console.info('COMPARE: does ', matches, ' contain "',  this.searchFields[key], '" from ',  key, _.contains(matches, this.searchFields[key]));
+			
 			/* see if the value matches */
 			return _.contains(matches, this.searchFields[key]);
 			
@@ -272,6 +278,8 @@ _.extend(ExMatch.prototype, {
 	$base: function (exp, fn, selector, comparer) {
 				
 			var exp = this._search[exp];
+			
+			this.expression = exp.exp;
 			
 			if(!exp || exp.length < 1)return true;
 			
