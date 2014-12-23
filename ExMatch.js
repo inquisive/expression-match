@@ -291,7 +291,7 @@ _.extend(ExMatch.prototype, {
 	},
 	
 	/**
-	 * add patterns to $and search
+	 * add patterns to expresion search
 	 * @param  {object} can contain any search patterns
 	 * return boolean
 	 */
@@ -302,16 +302,38 @@ _.extend(ExMatch.prototype, {
 		
 		return this;
 	},
-	
-	/**
-	 * add patterns to $or search
-	 * @param  {object} can contain any search patterns
-	 * return boolean
-	 */
 	or: function(pattern) {
 		if(!_.isObject(pattern)) return false;
 		
 		this.setSearchParams({$or: pattern});
+		
+		return this;
+	},
+	lt: function(pattern) {
+		if(!_.isObject(pattern)) return false;
+		
+		this.setSearchParams({$lt: pattern});
+		
+		return this;
+	},
+	lte: function(pattern) {
+		if(!_.isObject(pattern)) return false;
+		
+		this.setSearchParams({$lte: pattern});
+		
+		return this;
+	},
+	gt: function(pattern) {
+		if(!_.isObject(pattern)) return false;
+		
+		this.setSearchParams({$gt: pattern});
+		
+		return this;
+	},
+	gte: function(pattern) {
+		if(!_.isObject(pattern)) return false;
+		
+		this.setSearchParams({$gte: pattern});
 		
 		return this;
 	},
