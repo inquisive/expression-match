@@ -97,12 +97,12 @@ _.extend(ExMatch.prototype, {
 			var pushIt = {};
 			pushIt[key] = obj[newKey];
 			if(!newKey || newKey == key || pushIt[key] === undefined) {
-				if(this.debug) console.log(exp, 'failed to create new ExMatch Instance');
+				if(this.debug) console.log('failed to wrap ', key, obj, newKey);
 				return;
 			}
 			var finalObj = {}
 			finalObj[newKey] = pushIt;
-					
+			if(this.debug) console.log(obj, 'rewrapped to ', finalObj);		
 			return finalObj;
 		}
 		var pushVal = function(exp,obj,parentKey) {
@@ -133,14 +133,14 @@ _.extend(ExMatch.prototype, {
 			} else if( this.isExp(key) ) {
 				/* top level expression so create a new match */
 				if(this.debug) console.log(exp,'new top expression:', key,  obj);
-				if( !isObject ) var obj = reWrap(key,obj);
+				if( !isObject ) var obj = reWrap.call(this,parentKey,obj);
 				this._search[exp].search.push({'$match':new ExMatch(obj,this.searchFields,this._debug)});
 				
 			} else if(this.isExp(innerKey) ) {
 				/* comparison inside a normal key 
 				 * invert the keys
 				 * */
-				var newObj = reWrap(key,obj[key]);				 
+				var newObj = reWrap.call(this,key,obj[key]);				 
 				
 				if(this.debug) console.log(exp,'new expression inside:', key,  newObj);
 		
