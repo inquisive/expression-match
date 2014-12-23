@@ -109,7 +109,7 @@ describe('TRUE', function() {
 		});
 		
 		it('$or should be true', function() {
-			var m1 = new ExMatch(searchPatterns.e1,searchFields,true).match();
+			var m1 = new ExMatch(searchPatterns.e1,searchFields,false).match();
 			demand(m1).be.true();
 			m1 = undefined;
 		});
@@ -178,6 +178,16 @@ describe('TRUE', function() {
 			m7 = undefined;
 			m7r = undefined;
 		});
+		
+		it('run $regex only is true', function() {
+			var regex = new ExMatch({},searchFields,true);
+			regex.regex({str2: { $regex: 'hel.*/i'}});
+			var ret = regex.$regex();
+			demand(ret).be.true();
+			ret = undefined;
+			regex = undefined;
+		});
+		 
 		
 		
 });
