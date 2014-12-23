@@ -22,7 +22,6 @@
 ###Installation
 ```
 npm install snowkeeper/ExMatch
-
 ```
 ###Configuration
 ```
@@ -72,7 +71,7 @@ Run a single Expression search from the queue
 Match.regex({str2: { $regex: 'hel.*/i'}});
 var ret = Match.$regex();
 
-/* All return boolean TRUE/FALSE */
+/* All return boolean true/false */
 Match.$add();
 Match.$any(); 
 Match.$or();
