@@ -17,7 +17,7 @@ exports = module.exports = function(match, values, debug) {
  * @param {object} values
  * @param {boolean} debug
  */
-var ExMatch = exports.ExMatch = functionExMatch(match, values, debug) {
+var ExMatch = exports.ExMatch = function ExMatch(match, values, debug) {
 	
 	/* Ensure a new instance has been created.
 	 * Calling Wrapper as a function will return a new instance instead.
@@ -126,10 +126,9 @@ _.extend(ExMatch.prototype, {
 				this._search[exp].$comparer = obj.$comparer;
 				
 			} else if ( isArrayOnPlain ) {
-				/* top level expression so create a new match */
+				/* new Array expression inside match */
 				if (this.debug) console.log(exp,'new expression Array inside plain unsuported', innerKey,  innerObject);
-				return
-				//his._search[exp].search.push({'$match':new ExMatch(obj,this.searchFields,this._debug)});
+				return;
 				
 			} else if ( this.isExp(key) ) {
 				/* top level expression so create a new match */
@@ -593,7 +592,7 @@ _.extend(ExMatch.prototype, {
 				if(this.debug) console.log('Tried to run regex without $regex object set');
 				return false;
 			}
-			functionprepareRegExpString(string) {
+			function prepareRegExpString(string) {
 				var obj = {};
 				var params = string.substr(string.lastIndexOf('/')+1);
 				obj.params = params.search("g") ? params : '';
