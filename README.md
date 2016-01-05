@@ -21,11 +21,11 @@
 
 ###Installation
 ```
-npm install snowkeeper/ExMatch
+npm install expression-match
 ```
 ###Configuration
 ```
-var ExMatch = require('exmatch');
+var ExMatch = require('expression-match');
 
 var patterns = {
 	e1: { $or:[ {sel1:['first','third']} , {check1:true} ] },

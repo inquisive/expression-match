@@ -1,5 +1,5 @@
 {
-  "name": "exmatch",
+  "name": "expression-match",
   "version": "0.0.8",
   "private": false,
   "description": "expression comparison",
@@ -9,7 +9,7 @@
     "url": "https://github.com/snowkeeper/exmatch"
   },
   "dependencies": {
-    "lodash": "2.4.x"
+    "lodash": "^3.10.0"
   },
   "devDependencies": {},
   "engines": {

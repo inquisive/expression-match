@@ -90,7 +90,6 @@ _.extend(ExMatch.prototype, {
 	 */
 	setSearchParams: function(match) {
 	
-		/* If we dont have an object  are we still true since we did naything false? */
 		if (!_.isObject(match))return true;
 		
 		var reWrap = function(key,obj) {
