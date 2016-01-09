@@ -72,14 +72,27 @@ _.extend(ExMatch.prototype, {
 	
 		if(!_.isString(key)) {
 			return false;
-		}		
-		/* Expression RegEx */
-		var RegEx = /^\$[A-Za-z]+$/;
+		}	
 		
-		/* match single word beginning with $ */
-		var ret = key.match(RegEx);
+		var allowed = [
+			'and',
+			'or',
+			'any',
+			'not',
+			'eq',
+			'ne',
+			'lt',
+			'gt',
+			'lte',
+			'gte',
+			'regex'
+		];	
 		
-		return  _.isObject(ret)  ? ret[0] : false;	
+		if(key[0] === '$') {
+			key = key.substr(1);
+		}
+		
+		return  ( allowed.indexOf(key) > -1 )  ? '$' + key : false;	
 		
 	},
 	
@@ -90,7 +103,9 @@ _.extend(ExMatch.prototype, {
 	 */
 	setSearchParams: function(match) {
 	
-		if (!_.isObject(match))return true;
+		if (!_.isObject(match)) {
+			return true;
+		}
 		
 		var reWrap = function(key,obj) {
 			var newKey = _.keys(obj)[0];
@@ -247,7 +262,7 @@ _.extend(ExMatch.prototype, {
 	/**
 	 * DEFAULT
 	 * selector runs the selected true/false group return comparison method
-	 * eg: _.every or _.some                                                                                                                                                                                                                                   
+	 * eg: _.every or _.some                                                                       
 	 * @param  {function} group comparison method
 	 * @param  {object} the search pattern object
 	 * 				exp: name of the expression
@@ -313,7 +328,7 @@ _.extend(ExMatch.prototype, {
 			
 			/* see if the value matches 
 			 * if we have a custom comparer run it
-			 * the custom comparer should excpect the test against variable first and test for variable second
+			 * the custom comparer should expect the test against variable first, then the test for variable second
 			 *  */
 			if (_.isFunction(this._current.$comparer)) {
 				
@@ -466,7 +481,7 @@ _.extend(ExMatch.prototype, {
 		
 	/**
 	 * Expression comparers
-	 * provide a loop functionif not _.every
+	 * provide a iteration function if not _.every
 	 * @param  {string} expression
 	 * @param  {function} loop true/false function
 	 * @param  {function} selector function

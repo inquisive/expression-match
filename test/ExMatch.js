@@ -22,24 +22,24 @@ before(function() {
 	
 	searchPatterns = {
 		/* true */
-		e0: { $or:[ {str1:['string1']} , {check1:'true'} ] ,num2:'2',num1:{$lt:2}},
-		e1: { $or:[ {str1:['string','third']} , {check1:'false'} ] },
-		e2: { $and:[ {str1:'string'} , {check2:false} ] },
-		e3: { $lte:[ {num1:1} , {num3:4} ] },
-		e4: { $gt:[{num3:1}],$and:[{num1:1},{str2:'hello'},{num2:{$lt:4}}] },
-		e5: { $or:[ {num1:{$gte:1}} , {num2:{$lte:1}} ] },
+		e0: { or:[ {str1:['string1']} , {check1:'true'} ] ,num2:'2',num1:{$lt:2}},
+		e1: { or:[ {str1:['string','third']} , {check1:'false'} ] },
+		e2: { and:[ {str1:'string'} , {check2:false} ] },
+		e3: { lte:[ {num1:1} , {num3:4} ] },
+		e4: { gt:[{num3:1}],$and:[{num1:1},{str2:'hello'},{num2:{$lt:4}}] },
+		e5: { or:[ {num1:{$gte:1}} , {num2:{$lte:1}} ] },
 		e6: { num1:['3',1] },
 		e66: { num2:{$eq:2} ,$eq:{num2:2},$eq:[{num2:2}]},
 		e7: { $not:{num2:1} },
-		e77: { str1: 'string',str3: {$regex: /plu.*/i}},
+		e77: { str1: 'string',str3: {regex: /plu.*/i}},
 		e777: { $any: [ {num3:{$lte:2}},{$and:[{str1:'string1'},{str2:'hello'}]},{$or: [{str3: {$regex: /plu.*/i}},{check1:false}] }]},
 		
 		/* false */
 		e8: { $or:[ {str1:['first','third']} , {check1:'false'} ] },
 		e9: { $and:[ {str1:'string'} , {check2:true} ] },
 		e10: { $gte:[ {num1:14} , {num3:1} ] },
-		e11: { $lt:[ {num1:3} , {num3:2} ] },
-		e12: { $or:[ {num1:{$gte:13}} , {num2:{$lte:1}} ] },
+		e11: { lt:[ {num1:3} , {num3:2} ] },
+		e12: { or:[ {num1:{$gte:13}} , {num2:{$lte:1}} ] },
 		e13: { str1:'stringa',str2:{$and:[{num1:1},{num2:2}]} },
 		e14: { $lte:{num2:1} },
 		e15: { num2:{$eq:2} ,$eq:{num2:2},$eq:[{num2:1}]},
@@ -180,7 +180,7 @@ describe('TRUE', function() {
 		});
 		
 		it('run $regex only is true', function() {
-			var regex = new ExMatch({},searchFields,true);
+			var regex = new ExMatch({},searchFields,false);
 			regex.regex({str2: { $regex: 'hel.*/i'}});
 			var ret = regex.$regex();
 			demand(ret).be.true();
