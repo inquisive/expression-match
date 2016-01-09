@@ -172,8 +172,11 @@ var ExMatch = require('exmatch');
 Test file located in `test` dir
 ```
 npm i -g mocha
+
+mocha
+
 ```
-<kbd>mocha</kbd>
+
 
 ###License
 MIT License
