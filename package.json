@@ -1,20 +1,17 @@
 {
   "name": "expression-match",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "private": false,
   "description": "expression comparison",
   "main": "./ExMatch.js",
   "repository": {
     "type": "git",
-    "url": "https://github.com/snowkeeper/exmatch"
+    "url": "https://github.com/snowkeeper/expression-match"
   },
   "dependencies": {
     "lodash": "^3.10.0"
   },
-  "devDependencies": {
-    "mocha": "^2.3.4",
-    "must": "^0.13.1"
-  },
+  "devDependencies": {},
   "engines": {
     "node": ">=0.10.22",
     "npm": ">=1.3.14"
@@ -29,9 +26,9 @@
   ],
   "readmeFilename": "README.md",
   "bugs": {
-    "url": "https://github.com/snowkeeper/exmatch/issues"
+    "url": "https://github.com/snowkeeper/expression-match/issues"
   },
   "scripts": {},
-  "_id": "exmatch@0.0.8",
+  "_id": "exmatch@0.0.9",
   "_from": "exmatch@0.0.8"
 }
