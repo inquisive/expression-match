@@ -13,6 +13,7 @@ before(function() {
 		str1: 'string',
 		str2: 'hello',
 		str3: 'plug',
+		str4: ['1','2'],
 		num1: 1,
 		num2: '2',
 		num3: '3',
@@ -29,7 +30,7 @@ before(function() {
 		e4: { gt:[{num3:1}],$and:[{num1:1},{str2:'hello'},{num2:{$lt:4}}] },
 		e5: { or:[ {num1:{$gte:1}} , {num2:{$lte:1}} ] },
 		e6: { num1:['3',1] },
-		e66: { num2:{$eq:2} ,$eq:{num2:2},$eq:[{num2:2}]},
+		e66: { $eq:[{num2:2}]},
 		e7: { $not:{num2:1} },
 		e77: { str1: 'string',str3: {regex: /plu.*/i}},
 		e777: { $any: [ {num3:{$lte:2}},{$and:[{str1:'string1'},{str2:'hello'}]},{$or: [{str3: {$regex: /plu.*/i}},{check1:false}] }]},
@@ -43,6 +44,8 @@ before(function() {
 		e13: { str1:'stringa',str2:{$and:[{num1:1},{num2:2}]} },
 		e14: { $lte:{num2:1} },
 		e15: { num2:{$eq:2} ,$eq:{num2:2},$eq:[{num2:1}]},
+		e16: { $and: { str2: ['2', '1']} },
+		e17: { $eq: { str4: ['2', '1']} }
 	}
 });
 
@@ -96,6 +99,18 @@ describe('FALSE', function() {
 			m15 = undefined;
 		});
 		
+		it('$and should be false', function() {
+			var m16 = new ExMatch(searchPatterns.e16,searchFields, true).match();
+			demand(m16).be.false();
+			m16 = undefined;
+		});
+		
+		it('$eq should be true', function() {
+			var m17 = new ExMatch(searchPatterns.e17,searchFields, true).match();
+			demand(m17).be.true();
+			m17 = undefined;
+		});
+		
 });
 
 
@@ -138,15 +153,15 @@ describe('TRUE', function() {
 			m5 = undefined;
 		});
 		
-		it('plain array should be true', function() {
-			var m6 = new ExMatch(searchPatterns.e6,searchFields,false).match();
-			demand(m6).be.true();
+		it('plain array should be false', function() {
+			var m6 = new ExMatch(searchPatterns.e6,searchFields,true).match();
+			demand(m6).be.false();
 			m6 = undefined;
 		});
 		
-		it('$eq should be true', function() {
-			var m66 = new ExMatch(searchPatterns.e66,searchFields,false).match();
-			demand(m66).be.true();
+		it('$eq should be false', function() {
+			var m66 = new ExMatch(searchPatterns.e66,searchFields,true).match();
+			demand(m66).be.false();
 			m66 = undefined;
 		});
 		

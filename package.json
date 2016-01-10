@@ -29,6 +29,6 @@
     "url": "https://github.com/snowkeeper/expression-match/issues"
   },
   "scripts": {},
-  "_id": "exmatch@0.0.9",
-  "_from": "exmatch@0.0.8"
+  "_id": "exmatch@0.0.10",
+  "_from": "exmatch@0.0.9"
 }

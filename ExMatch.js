@@ -6,8 +6,8 @@ var _ = require ('lodash');
  * @param  {Function} fn
  * @return {Wrapper}
  */
-exports = module.exports = function(match, values, debug) {
-	return new ExMatch(match, values, debug);
+exports = module.exports = function(match, values, opts) {
+	return new ExMatch(match, values, opts);
 };
 
 /**
@@ -17,13 +17,13 @@ exports = module.exports = function(match, values, debug) {
  * @param {object} values
  * @param {boolean} debug
  */
-var ExMatch = exports.ExMatch = function ExMatch(match, values, debug) {
+var ExMatch = exports.ExMatch = function ExMatch(match, values, opts) {
 	
 	/* Ensure a new instance has been created.
 	 * Calling Wrapper as a function will return a new instance instead.
 	 * */
 	if (!(this instanceof ExMatch)) {
-		return new ExMatch(match, values, debug);
+		return new ExMatch(match, values, opts);
 	}
  
 	/*If there is not a match object assume true */
@@ -35,15 +35,33 @@ var ExMatch = exports.ExMatch = function ExMatch(match, values, debug) {
 		return false;
 	}
 	
-	this._debug = debug;
-	this.debug = ( debug === true && debug !== 2 ) ? true : false;
-	this.debugComparison = debug === 2;
+	/* defaults */
+	var _defaults =  { 
+		expression: '$and',
+		debug: false
+	}
+	
+	var options = {};
+	/* user defaults */
+	if (!_.isObject(opts) ) {
+		if(!_.isEmpty(opts) ) {
+			options.debug = opts;
+		}
+	} else {
+		options = opts;
+	}
+	
+	this.defaults =  _.defaults(_defaults, options)
+	
+	this._debug = this.defaults.debug;
+	this.debug = ( this.defaults.debug === true && this.defaults.debug !== 2 ) ? true : false;
+	this.debugComparison = this.defaults.debug === 2;
 	
 	/* container for expression comparers */
 	this._search = {};
 	
 	/* default expression will always be $and if not provided */
-	this.expression = '$and';
+	this.expression = this.defaults.expression;
 	
 	/* save the search fields */
 	this.searchFields = values;
@@ -128,7 +146,8 @@ _.extend(ExMatch.prototype, {
 			
 			/* is the first key an object */
 			var isObject = _.isObject(obj[key]);
-			var isArrayOnPlain = ( _.isArray(obj[key]) && !this.isExp(parentKey)) ? true : false;
+			var isArray = _.isArray(obj[key]);
+			var isArrayOnPlain = ( isArray && !this.isExp(parentKey)) ? true : false;
 			var innerKey = ( isObject ) ? _.keys(obj[key])[0] : false
 			var innerObject = ( innerKey ) ? obj[key][innerKey] : false;
 			
@@ -141,8 +160,15 @@ _.extend(ExMatch.prototype, {
 				
 			} else if ( isArrayOnPlain ) {
 				/* new Array expression inside match */
-				if (this.debug) console.log(exp,'new expression Array inside plain unsuported', innerKey,  innerObject);
-				return;
+				if (this.debug) console.log(exp,'Array inside plain, wrap each as ' + exp, obj[key], key, innerKey,  innerObject);
+								
+				obj[key].forEach(function(rewrite) {
+					var newObj = {};
+					newObj[key] = rewrite;
+					if (this.debug) console.log('push ' + exp, newObj);
+					this._search[exp].search.push(newObj);
+				}.bind(this));
+				
 				
 			} else if ( this.isExp(key) ) {
 				/* top level expression so create a new match */
@@ -162,6 +188,23 @@ _.extend(ExMatch.prototype, {
 		
 				this._search[exp].search.push({'$match':new ExMatch(newObj,this.searchFields,this._debug)});
 			
+			} else if(this.fake === true) {
+				/* value is an array and the key is not an expression
+				 * loop and add individual searches
+				 * */
+				
+				if (this.debug) console.log(exp,'plain array value for expression', key,  newObj);
+				
+				obj[key].forEach(function(rewrite) {
+					
+					var newObj = {};
+					newObj[key] = rewrite;
+					if (this.debug) console.log('push ' + exp, newObj);
+					this._search[exp].search.push(newObj);
+					
+				}.bind(this));
+				
+			
 			} else {
 				/*  regular item push onto the search array */
 				if (this.debug) console.log(exp,'add match', key,  obj);
@@ -178,7 +221,7 @@ _.extend(ExMatch.prototype, {
 			var exp = this.isExp(key);
 
 			/* check for an expression */
-			if (!exp) exp = '$and';
+			if (!exp) exp = this.defaults.expression;
 			
 			/* set the search object */
 			if (!this._search[exp]) {
@@ -194,6 +237,7 @@ _.extend(ExMatch.prototype, {
 			if(_.isArray(val) && this.isExp(key)) {
 				
 				if(this.debug) console.log(key + ' val isArray so loop');
+				//return pushVal(exp,val,key);
 				
 				_.each(val,function(obj) {
 					if (!_.isObject(obj)) {
@@ -202,7 +246,7 @@ _.extend(ExMatch.prototype, {
 						ret[obj] = true;
 						obj = ret;
 					}
-					if (this.debug) console.log('push from ' + key + ' Array',obj);
+					if (this.debug) console.log('push from ' + key + ' Array', obj);
 					pushVal(exp,obj,key);
 					
 				}, this);
@@ -212,8 +256,8 @@ _.extend(ExMatch.prototype, {
 				/* we can accept plain objects which are now just a value so wrap it back up */
 				var retObj = {}
 				retObj[key] = val;
-				pushVal(exp,retObj,key);
 				if(this.debug) console.log('push plain value',retObj);
+				pushVal(exp,retObj,key);
 				
 			} else if(_.isObject(val)) {
 				if(this.debug) console.log('push object',val);
@@ -243,6 +287,7 @@ _.extend(ExMatch.prototype, {
 		var ret = _.every(this._search,function(val) {		
 			
 			if(!_.isArray(val.search) || val.search.length < 1) {
+				if(this.debug || this.debugComparison) console.log('val.search is array.. return true', val.search, val);
 				return true;
 			}			
 			if(val.exp === false || !_.isFunction(this[val.exp]) ) {
@@ -333,11 +378,12 @@ _.extend(ExMatch.prototype, {
 			if (_.isFunction(this._current.$comparer)) {
 				
 				if(this.debug) console.log(this._current.exp + ' custom comparer used');
-				var ret = this._current.$comparer.call(this,this.searchFields[key],val);
+				//var matches = ensureArray(val);
+				var ret = this._current.$comparer.call(this,this.searchFields[key], val);
 			
 			} else {
 				/* we want an Array of objects */	
-				var matches = _.isArray(val) ? val : [val];
+				var matches = ensureArray(val);
 				var ret = _.contains(matches, this.searchFields[key]);
 			}
 			
@@ -462,6 +508,7 @@ _.extend(ExMatch.prototype, {
 				return true;
 			}
 			if (!fn) {
+				// default $and
 				fn = _.every;
 			}		
 			if (!_.isFunction(exp.$comparer)) {
@@ -495,7 +542,12 @@ _.extend(ExMatch.prototype, {
 				return false;
 			}
 			var comparer = function(a,b) {
-				return Number(a) >  Number(b);
+				b = ensureArray(b);
+				var ret = _.every(b,function(v) {
+					return Number(a) > Number(v);
+				});
+				
+				return ret;
 			};
 			
 			return this.$base.call(this,"$gt",_.every,false,comparer);
@@ -508,7 +560,12 @@ _.extend(ExMatch.prototype, {
 				return false;
 			}
 			var comparer = function(a,b) {
-				return Number(a) >= Number(b);
+				b = ensureArray(b);
+				var ret = _.every(b,function(v) {
+					return Number(a) >= Number(v);
+				});
+				
+				return ret;
 			};
 			
 			return this.$base.call(this,"$gte",_.every,false,comparer);
@@ -520,7 +577,12 @@ _.extend(ExMatch.prototype, {
 				return false;
 			}
 			var comparer = function(a,b) {
-				return Number(a) <  Number(b);
+				b = ensureArray(b);
+				var ret = _.every(b,function(v) {
+					return Number(a) < Number(v);
+				});
+				
+				return ret;
 			};
 			
 			return this.$base.call(this,"$lt",_.every,false,comparer);
@@ -532,7 +594,12 @@ _.extend(ExMatch.prototype, {
 				return false;
 			}
 			var comparer = function(a,b) {
-				return Number(a) <=  Number(b);
+				b = ensureArray(b);
+				var ret = _.every(b,function(v) {
+					return Number(a) <= Number(v);
+				});
+				
+				return ret;
 			};
 			
 			return this.$base.call(this,"$lte",_.every,false,comparer);
@@ -571,6 +638,7 @@ _.extend(ExMatch.prototype, {
 				return false;
 			}
 			var comparer = function(a,b) {
+				b = ensureArray(b);
 				var ret = _.contains(b, a);
 				return !ret;
 			};
@@ -583,7 +651,14 @@ _.extend(ExMatch.prototype, {
 				return false;
 			}
 			var comparer = function(a,b) {
-				var ret = (a == b);
+				if(this.debug) console.log('compare $eq', a, b);
+				b = ensureArray(b);
+				a = ensureArray(a);
+				if(this.debug) console.log('compare $eq', a, b);
+				var ret = _.every(b,function(v) {
+					return a.indexOf(v) > -1;
+				});
+				
 				return ret;
 			};
 			return this.$base.call(this,"$eq",_.every,false,comparer);
@@ -595,7 +670,11 @@ _.extend(ExMatch.prototype, {
 				return false;
 			}
 			var comparer = function(a,b) {
-				var ret = (a != b);
+				b = ensureArray(b);
+				var ret = _.every(b,function(v) {
+					return a !== v;
+				});
+				
 				return ret;
 			};
 			return this.$base.call(this,"$ne",_.every,false,comparer);
@@ -626,3 +705,7 @@ _.extend(ExMatch.prototype, {
 	}		
 	
 });
+
+function ensureArray(val) {
+	return ( _.isArray(val) ) ? val : [val];
+}
