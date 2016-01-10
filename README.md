@@ -1,4 +1,4 @@
-# Expression Matcher
+# Match an object to a value with expressions
 ### Use expression patterns to compare object values
 
 **Table of Contents**
