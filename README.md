@@ -1,4 +1,4 @@
-# Match Qbjects with Expressions
+# Match Objects with Expressions
 ### Use expression patterns to compare object values
 
 **Table of Contents**
