@@ -37,9 +37,11 @@ var patterns = {
 /* debug can be any truthy or 2 for compare only
  * @param {object} matchPatterns
  * @param {object} matchAgainst
- * @param {boolean} debug 
+ * @param {object/boolean} options - debug only when boolean 
  * */
-var Match = new ExMatch( patterns.e2, matchAgainst, true);
+ 
+// `options.expression` changes the default expression which is `$and`.  
+var Match = new ExMatch( patterns.e2, matchAgainst, { debug: true, expression: '$or' });
 
 ```
 
@@ -111,7 +113,7 @@ Tester.add({
 
 }, 'Show Dependants When', {
 
-    sel1: { type: Types.Select, note:'`second`==`Fire` with `str3` == regex`fir*`  && `first` || `third` ~= `Ice`', label:'sel1', options: 'first, second, third', emptyOption: true },
+    sel1: { type: Types.Select, many: true, emptyOption: true },
 	check1: { type: Boolean,  label: 'Check 1' , note:'earth ' },
 	check2: { type: Boolean,  label: 'Check 2'  },
 	num1: {type: Types.Number, note:'show `Water` when >= `6`  -- --  `<=1` == `And` with num3'  },
@@ -154,7 +156,7 @@ var ExMatch = require('exmatch');
     
     var Match = new ExMatch({ num2:{$eq:2} , $eq:{num3:'3'}, $eq:[{num1:'1'}] }, searchFields);
     var ret = Match.match();
-    ==> true
+    ==> false
     
     var Match = new ExMatch({ num2:{$eq:2} ,$eq:{num2:2}, $eq:[{num2:1}] } , searchFields);
     var ret = Match.match();
