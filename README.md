@@ -1,6 +1,7 @@
 # Expression Matcher
 ### Use expression patterns to compare object values
 
+[![NPM](https://nodei.co/npm/expression-match.png)](https://npmjs.org/package/expression-match)
 
 **Table of Contents**
 
