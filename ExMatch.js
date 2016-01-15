@@ -1,5 +1,19 @@
 var _ = require ('lodash');
 
+var expressions = [
+	'and',
+	'or',
+	'any',
+	'not',
+	'eq',
+	'ne',
+	'lt',
+	'gt',
+	'lte',
+	'gte',
+	'regex'
+];
+
 /**
  * Calling the module directly returns a new ExMatch instance
  * 
@@ -30,7 +44,7 @@ var ExMatch = exports.ExMatch = function ExMatch(match, values, opts) {
 	if (!_.isObject(match)) {
 		return true;
 	}
-	/* If not values assume false */
+	/* If no values assume false */
 	if (!_.isObject(values)) {
 		return false;
 	}
@@ -51,15 +65,19 @@ var ExMatch = exports.ExMatch = function ExMatch(match, values, opts) {
 		options = opts;
 	}
 	
-	this.defaults =  _.defaults(_defaults, options)
+	this.defaults =  _.defaults(options, _defaults);
 	
+	/* debug choice */
 	this._debug = this.defaults.debug;
 	this.debug = ( this.defaults.debug === true && this.defaults.debug !== 2 ) ? true : false;
 	this.debugComparison = this.defaults.debug === 2;
 	
+	/* allowed expressions */
+	this.expressions = expressions;
+	
 	/* container for expression comparers */
 	this._search = {};
-	
+
 	/* default expression will always be $and if not provided */
 	this.expression = this.defaults.expression;
 	
@@ -73,12 +91,13 @@ var ExMatch = exports.ExMatch = function ExMatch(match, values, opts) {
 	 * objects not assigned to an expression are added into a single $and expression
 	 * */
 	this.setSearchParams(match);
-	
-	//if(debug) console.log('_search Array', this._search, 'search field:value ', this.searchFields);
-	
+		
 	return this;
 
 };
+ 
+/* add public search methods to prototype */
+expressionMethods(expressions);
 
 _.extend(ExMatch.prototype, {
 	/**
@@ -92,19 +111,7 @@ _.extend(ExMatch.prototype, {
 			return false;
 		}	
 		
-		var allowed = [
-			'and',
-			'or',
-			'any',
-			'not',
-			'eq',
-			'ne',
-			'lt',
-			'gt',
-			'lte',
-			'gte',
-			'regex'
-		];	
+		var allowed = this.expressions;	
 		
 		if(key[0] === '$') {
 			key = key.substr(1);
@@ -126,16 +133,24 @@ _.extend(ExMatch.prototype, {
 		}
 		
 		var reWrap = function(key,obj) {
+			// the first key in the set will be the new object key
 			var newKey = _.keys(obj)[0];
 			var pushIt = {};
 			pushIt[key] = obj[newKey];
+			
 			if (!newKey || newKey == key || pushIt[key] === undefined) {
-				if(this.debug) console.log('failed to wrap ', key, obj, newKey);
+				if(this.debug) {
+					console.log('failed to wrap ', key, obj, newKey);
+				}
 				return;
 			}
+			
+			// wrap it up
 			var finalObj = {}
 			finalObj[newKey] = pushIt;
-			if(this.debug) console.log(obj, 'rewrapped to ', finalObj);		
+			if(this.debug) {
+				console.log(obj, 'rewrapped to ', finalObj);
+			}
 			return finalObj;
 		}
 		var pushVal = function(exp,obj,parentKey) {
@@ -144,11 +159,16 @@ _.extend(ExMatch.prototype, {
 			* */
 			var key = _.keys(obj)[0];
 			
-			/* is the first key an object */
+			/* is the first item an object */
 			var isObject = _.isObject(obj[key]);
+			/* maybe an array */
 			var isArray = _.isArray(obj[key]);
-			var isArrayOnPlain = ( isArray && !this.isExp(parentKey)) ? true : false;
+			/* could be a simple array on a value key */
+			//var isArrayOnPlain = ( isArray && !this.isExp(parentKey)) ? true : false;
+			var isArrayOnPlain = ( isArray ) ? true : false;
+			/* if an object get the first key to check for an expression */
 			var innerKey = ( isObject ) ? _.keys(obj[key])[0] : false
+			/* contents of the search object */
 			var innerObject = ( innerKey ) ? obj[key][innerKey] : false;
 			
 			/* Still working on the $selector and $comparer  */
@@ -159,27 +179,38 @@ _.extend(ExMatch.prototype, {
 				this._search[exp].$comparer = obj.$comparer;
 				
 			} else if ( isArrayOnPlain ) {
-				/* new Array expression inside match */
-				if (this.debug) console.log(exp,'Array inside plain, wrap each as ' + exp, obj[key], key, innerKey,  innerObject);
+				/* 
+				 * simple value comparison of an array
+				 * the default is to wrap it in an $and search which checks for all values in an array
+				 * to check for one of the values the default should be set to $or
+				 *  
+				 * */
+				if (this.debug) {
+					console.log(exp,'Array inside plain, wrap each as ' + exp, obj[key], key, innerKey,  innerObject);
+				}
 								
 				obj[key].forEach(function(rewrite) {
 					var newObj = {};
 					newObj[key] = rewrite;
-					if (this.debug) console.log('push ' + exp, newObj);
+					if (this.debug) {
+						console.log('push ' + exp, newObj);
+					}
 					this._search[exp].search.push(newObj);
 				}.bind(this));
 				
 				
 			} else if ( this.isExp(key) ) {
 				/* top level expression so create a new match */
-				if (this.debug) console.log(exp,'new top expression:', key,  obj);
+				if (this.debug) {
+					console.log(exp,'new top expression:', key,  obj);
+				}
 				if ( !isObject ) {
 					var obj = reWrap.call(this,parentKey,obj);
 				}
 				this._search[exp].search.push({'$match':new ExMatch(obj,this.searchFields,this._debug)});
 				
 			} else if(this.isExp(innerKey) ) {
-				/* comparison inside a normal key 
+				/* comparison inside a value key 
 				 * invert the keys
 				 * */
 				var newObj = reWrap.call(this,key,obj[key]);				 
@@ -187,23 +218,6 @@ _.extend(ExMatch.prototype, {
 				if (this.debug) console.log(exp,'new expression inside:', key,  newObj);
 		
 				this._search[exp].search.push({'$match':new ExMatch(newObj,this.searchFields,this._debug)});
-			
-			} else if(this.fake === true) {
-				/* value is an array and the key is not an expression
-				 * loop and add individual searches
-				 * */
-				
-				if (this.debug) console.log(exp,'plain array value for expression', key,  newObj);
-				
-				obj[key].forEach(function(rewrite) {
-					
-					var newObj = {};
-					newObj[key] = rewrite;
-					if (this.debug) console.log('push ' + exp, newObj);
-					this._search[exp].search.push(newObj);
-					
-				}.bind(this));
-				
 			
 			} else {
 				/*  regular item push onto the search array */
@@ -367,7 +381,7 @@ _.extend(ExMatch.prototype, {
 		} else {
 			
 			if (this.searchFields[key] === undefined) {
-				if(this.debug || this.debugComparison) console.info(this._current.exp.toUpperCase() + ' SKIP COMPARE: searchFields['+key+'] = ', this.searchFields[key], val);
+				if(this.debug || this.debugComparison) console.info(this._current.exp.toUpperCase() + ' SKIP COMPARE: searchFields['+key+'] = ', this.searchFields[key], val, key);
 				return false;
 			}
 			
@@ -391,89 +405,6 @@ _.extend(ExMatch.prototype, {
 			return ret;
 		}	
 	},
-	
-	/**
-	 * add patterns to expresion search
-	 * @param  {object} can contain any search patterns
-	 * return boolean
-	 */
-	and: function(pattern) {
-		if (!_.isObject(pattern)) {
-			return false;
-		}
-		this.setSearchParams({$and: pattern});
-		return this;
-	},
-	or: function(pattern) {
-		if (!_.isObject(pattern)) {
-			return false;
-		}
-		this.setSearchParams({$or: pattern});
-		return this;
-	},
-	any: function(pattern) {
-		if (!_.isObject(pattern)) {
-			return false;
-		}
-		this.setSearchParams({$any: pattern});
-		return this;
-	},
-	not: function(pattern) {
-		if (!_.isObject(pattern)) {
-			return false;
-		}
-		this.setSearchParams({$not: pattern});
-		return this;
-	},
-	eq: function(pattern) {
-		if (!_.isObject(pattern)) {
-			return false;
-		}
-		this.setSearchParams({$eq: pattern});
-		return this;
-	},
-	ne: function(pattern) {
-		if (!_.isObject(pattern)) {
-			return false;
-		}
-		this.setSearchParams({$ne: pattern});
-		return this;
-	},
-	lt: function(pattern) {
-		if (!_.isObject(pattern)) {
-			return false;
-		}
-		this.setSearchParams({$lt: pattern});
-		return this;
-	},
-	lte: function(pattern) {
-		if (!_.isObject(pattern)) {
-			return false;
-		}
-		this.setSearchParams({$lte: pattern});
-		return this;
-	},
-	gt: function(pattern) {
-		if (!_.isObject(pattern)) {
-			return false;
-		}
-		this.setSearchParams({$gt: pattern});
-		return this;
-	},
-	gte: function(pattern) {
-		if (!_.isObject(pattern)) {
-			return false;
-		}
-		this.setSearchParams({$gte: pattern});
-		return this;
-	},
-	regex: function(pattern) {
-		if (!_.isObject(pattern)) {
-			return false;
-		}
-		this.setSearchParams({$regex: pattern});
-		return this;
-	},
 	reset: function(exp) {
 		if (exp) {
 			if (_.isObject(this._search[exp])) {
@@ -481,7 +412,7 @@ _.extend(ExMatch.prototype, {
 			}
 		} else {
 			this._search = {};
-			this.expression = '$and';
+			this.expression = this.get('expression');
 			this.searchFields = {};
 			this._match = {};
 			this._current = {};
@@ -620,7 +551,7 @@ _.extend(ExMatch.prototype, {
 				return false;
 			}
 			
-			return this.$base.call(this,"$any",_.some);
+			return this.$base.call(this, "$any", _.some);
 	},
 	/* and */
 	$and: function() {
@@ -629,7 +560,7 @@ _.extend(ExMatch.prototype, {
 				return false;
 			}
 			
-			return this.$base.call(this,"$and");
+			return this.$base.call(this, "$and");
 	},
 	/* not */
 	$not: function() {
@@ -705,6 +636,29 @@ _.extend(ExMatch.prototype, {
 	}		
 	
 });
+
+function expressionMethods(expressions) {
+	
+	/**
+	 * add patterns to expresion search
+	 * @param  {object} search patterns
+	 * return boolean
+	 */
+	 
+	expressions.forEach(function(exp) {
+		ExMatch.prototype[exp] = function(pattern) {
+			if (!_.isObject(pattern)) {
+				return false;
+			}
+			var newExp = {};
+			newExp[exp] = pattern;
+			this.setSearchParams(newExp);
+			return this;
+		}
+
+	}.bind(this));
+	
+}
 
 function ensureArray(val) {
 	return ( _.isArray(val) ) ? val : [val];
