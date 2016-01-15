@@ -1,6 +1,6 @@
 {
   "name": "expression-match",
-  "version": "0.0.12",
+  "version": "0.0.13",
   "private": false,
   "description": "expression comparison",
   "main": "./ExMatch.js",
@@ -29,6 +29,6 @@
     "url": "https://github.com/inquisive/expression-match/issues"
   },
   "scripts": {},
-  "_id": "exmatch@0.0.12",
-  "_from": "exmatch@0.0.11"
+  "_id": "exmatch@0.0.13",
+  "_from": "exmatch@0.0.12"
 }

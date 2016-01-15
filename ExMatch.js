@@ -58,20 +58,20 @@ var ExMatch = exports.ExMatch = function ExMatch(match, values, opts) {
 	var options = {};
 	/* user defaults */
 	if (!_.isObject(opts) ) {
-		if(!_.isEmpty(opts) ) {
+		if(opts) {
 			options.debug = opts;
 		}
 	} else {
 		options = opts;
 	}
 	
-	this.defaults =  _.defaults(options, _defaults);
+	this.defaults =  Object.assign( _defaults, options);
 	
 	/* debug choice */
 	this._debug = this.defaults.debug;
 	this.debug = ( this.defaults.debug === true && this.defaults.debug !== 2 ) ? true : false;
 	this.debugComparison = this.defaults.debug === 2;
-	
+
 	/* allowed expressions */
 	this.expressions = expressions;
 	
@@ -178,7 +178,7 @@ _.extend(ExMatch.prototype, {
 			} else if (key === '$comparer') {
 				this._search[exp].$comparer = obj.$comparer;
 				
-			} else if ( isArrayOnPlain ) {
+			} else if ( isArrayOnPlain && !this.isExp(parentKey) ) {
 				/* 
 				 * simple value comparison of an array
 				 * the default is to wrap it in an $and search which checks for all values in an array
@@ -219,6 +219,29 @@ _.extend(ExMatch.prototype, {
 		
 				this._search[exp].search.push({'$match':new ExMatch(newObj,this.searchFields,this._debug)});
 			
+			} else if ( isArrayOnPlain && this.isExp(parentKey) ) {
+				/* 
+				 * simple value comparison of an array
+				 * the default is to wrap it in an $and search which checks for all values in an array
+				 * to check for one of the values the default should be set to $or
+				 *  
+				 * */
+				var pExp = this.isExp(parentKey);
+				 
+				if (this.debug) {
+					console.log(parentKey,'Array inside plain, wrap each as ' + pExp, obj[key], key, exp,  innerObject, innerKey);
+				}
+								
+				obj[key].forEach(function(rewrite) {
+					var newObj = {};
+					newObj[key] = rewrite;
+					if (this.debug) {
+						console.log('push ' + pExp, newObj);
+					}
+					this._search[pExp].search.push(newObj);
+				}.bind(this));
+				
+				
 			} else {
 				/*  regular item push onto the search array */
 				if (this.debug) console.log(exp,'add match', key,  obj);
@@ -252,7 +275,7 @@ _.extend(ExMatch.prototype, {
 				
 				if(this.debug) console.log(key + ' val isArray so loop');
 				//return pushVal(exp,val,key);
-				
+								
 				_.each(val,function(obj) {
 					if (!_.isObject(obj)) {
 						/* this is a string in an Array so we assume it is a field name that should be boolean true */

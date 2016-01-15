@@ -32,6 +32,7 @@ before(function() {
 		e6: { num1:['3',1] },
 		e66: { $eq:[{num2:2}]},
 		e7: { $not:{num2:1} },
+		e007: { $gt:[{num3:1}],$and:[{num1:1},{str1:['string','third']},{num2:{$lt:4}}] },
 		e77: { str1: 'string',str3: {regex: /plu.*/i}},
 		e777: { $any: [ {num3:{$lte:2}},{$and:[{str1:'string1'},{str2:'hello'}]},{$or: [{str3: {$regex: /plu.*/i}},{check1:false}] }]},
 		
@@ -50,6 +51,12 @@ before(function() {
 });
 
 describe('FALSE', function() {
+		it('$gt, $and array normal should be false', function() {
+			var m007 = new ExMatch(searchPatterns.e007,searchFields, false).match();
+			demand(m007).be.false();
+			m007 = undefined;
+		});
+		
 		
 		it('$or should be false', function() {
 			var m8 = new ExMatch(searchPatterns.e8,searchFields).match();
@@ -100,13 +107,13 @@ describe('FALSE', function() {
 		});
 		
 		it('$and should be false', function() {
-			var m16 = new ExMatch(searchPatterns.e16,searchFields, true).match();
+			var m16 = new ExMatch(searchPatterns.e16,searchFields, false).match();
 			demand(m16).be.false();
 			m16 = undefined;
 		});
 		
 		it('$eq should be true', function() {
-			var m17 = new ExMatch(searchPatterns.e17,searchFields, true).match();
+			var m17 = new ExMatch(searchPatterns.e17,searchFields, false).match();
 			demand(m17).be.true();
 			m17 = undefined;
 		});
@@ -118,13 +125,13 @@ describe('TRUE', function() {
 		
 		it('$or then plain $and should be true', function() {
 			/* debug is true instead of false in ExMatch */
-			var m0 = new ExMatch(searchPatterns.e0,searchFields,false).match();
+			var m0 = new ExMatch(searchPatterns.e0,searchFields,true).match();
 			demand(m0).be.true();
 			m0 = undefined;
 		});
 		
 		it('$or should be true', function() {
-			var m1 = new ExMatch(searchPatterns.e1,searchFields,false).match();
+			var m1 = new ExMatch(searchPatterns.e1,searchFields,true).match();
 			demand(m1).be.true();
 			m1 = undefined;
 		});
@@ -154,13 +161,13 @@ describe('TRUE', function() {
 		});
 		
 		it('plain array should be false', function() {
-			var m6 = new ExMatch(searchPatterns.e6,searchFields,true).match();
+			var m6 = new ExMatch(searchPatterns.e6,searchFields,false).match();
 			demand(m6).be.false();
 			m6 = undefined;
 		});
 		
 		it('$eq should be false', function() {
-			var m66 = new ExMatch(searchPatterns.e66,searchFields,true).match();
+			var m66 = new ExMatch(searchPatterns.e66,searchFields,false).match();
 			demand(m66).be.false();
 			m66 = undefined;
 		});
