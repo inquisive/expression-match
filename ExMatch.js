@@ -11,7 +11,10 @@ var expressions = [
 	'gt',
 	'lte',
 	'gte',
-	'regex'
+	'regex',
+	'truthy', // in development
+	'falsey', // in development
+	'falsy' // in development
 ];
 
 /**
@@ -65,7 +68,7 @@ var ExMatch = exports.ExMatch = function ExMatch(match, values, opts) {
 		options = opts;
 	}
 	
-	this.defaults =  Object.assign( _defaults, options);
+	this.defaults =  _.defaults( _defaults, options);
 	
 	/* debug choice */
 	this._debug = this.defaults.debug;
@@ -171,6 +174,7 @@ _.extend(ExMatch.prototype, {
 			/* contents of the search object */
 			var innerObject = ( innerKey ) ? obj[key][innerKey] : false;
 			
+			console.log('check for $comparer', key, exp, obj);
 			/* Still working on the $selector and $comparer  */
 			if (key === '$selector') {
 				this._search[exp].$selector = obj.$selector;
@@ -249,7 +253,7 @@ _.extend(ExMatch.prototype, {
 			}
 		}.bind(this);
 		
-		
+		console.log('match', match);
 		/* loop thorugh the root keys and create the _search list for the comparer */
 		_.each(match,function(val,key) {
 			
@@ -633,6 +637,44 @@ _.extend(ExMatch.prototype, {
 			};
 			return this.$base.call(this,"$ne",_.every,false,comparer);
 	},
+	/* truthy */
+	$truthy: function() {
+			if (!_.isObject(this._search.$truthy)) {
+				if(this.debug) console.log('Tried to run truthy without $truthy object set');
+				return false;
+			}
+			var comparer = function(a,b) {
+				b = ensureArray(b);
+				var ret = _.every(b,function(v) {
+					return !!v
+				});
+				
+				return ret;
+			};
+			return this.$base.call(this,"$truthy",_.every,false,comparer);
+	},
+	/* falsey */
+	$falsey: function() {
+			if (!_.isObject(this._search.$falsey)) {
+				if(this.debug) console.log('Tried to run falsey without $falsey object set');
+				return false;
+			}
+			var comparer = function(a,b) {
+				b = ensureArray(b);
+				var ret = _.every(b,function(v) {
+					if(!!v) {
+						return false;
+					} else {
+						return true;
+					}
+				});
+				
+				return ret;
+			};
+			return this.$base.call(this,"$falsey",_.every,false,comparer);
+	},
+	/* falsy */
+	$falsy: this.$falsey,
 	/* regex */
 	$regex: function() {
 			if (!_.isObject(this._search.$regex)) {
