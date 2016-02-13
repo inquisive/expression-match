@@ -174,7 +174,9 @@ _.extend(ExMatch.prototype, {
 			/* contents of the search object */
 			var innerObject = ( innerKey ) ? obj[key][innerKey] : false;
 			
-			console.log('check for $comparer', key, exp, obj);
+			if (this.debug) {
+				console.log('check for $comparer', key, exp, obj);
+			}
 			/* Still working on the $selector and $comparer  */
 			if (key === '$selector') {
 				this._search[exp].$selector = obj.$selector;
@@ -253,7 +255,9 @@ _.extend(ExMatch.prototype, {
 			}
 		}.bind(this);
 		
-		console.log('match', match);
+		if (this.debug) {
+			console.log('match', match);
+		}
 		/* loop thorugh the root keys and create the _search list for the comparer */
 		_.each(match,function(val,key) {
 			
