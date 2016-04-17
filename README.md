@@ -5,6 +5,7 @@
 
 - [ExMatch.js](#expression-matcher)
 	- [Installation](#installation)
+	- [Expressions](#expressions)
 	- [Configuration](#configuration)
 	- [Methods](#add-patterns)
 		- [Add Patterns](#add-patterns)
@@ -18,19 +19,33 @@
 	- [License](#license)
 
 
-###Installation
+### Installation
 ```
 npm install expression-match
 ```
-###Configuration
-```
+### Expressions
+  * add
+  * any
+  * eq
+  * gt
+  * gte
+  * in
+  * lt
+  * lte
+  * ne
+  * not
+  * or
+  * regex
+
+### Configuration
+```javascript
 var ExMatch = require('expression-match');
 
 var patterns = {
-	e1: { $or:[ {sel1:['first','third']} , {check1:true} ] },
-	e2: { $gt:[{num3:1}],$and:[{num1:'1'},{sel1:['first','third']},{num2:{$lt:4}}] },
-	e3: { sel1:'second',str3: {$regex: 'fir.*/i'} },
-	e4: { $lt:{num3:3} },
+	e1: { $or:[ { sel1:['first','third'] } , {check1:true} ] },
+	e2: { $gt: { num3:1 }, $and:[{num1:'1'}, {sel1:['first','third']}, {num2:{$lt:4}}] },
+	e3: { sel1: ['second', 'third'], str3: { $regex: 'fir.*/i' } },
+	e4: { num3: { $lte: 3 } },
 }
 
 /* debug can be any truthy or 2 for compare only
@@ -44,53 +59,60 @@ var Match = new ExMatch( patterns.e2, matchAgainst, { debug: true, expression: '
 
 ```
 
-###Add Patterns
+### Add Patterns
 Each method returns `this` for chainability
-```
+```javascript
 Match.
-	add( patterns.e3 ).
+	addSearchParams( patterns.e3 ).
+	and( patterns.e1 ).
 	any( patterns.e2 ).
-	or( patterns.e3 ).
-	lte( { num1: 2 } ).
-	lt( { num1: 2 } ).
-	gte( [ { num1: 2 }, { num2: 5 } ] ).
+	eq( { num1: 2, str2: 'hello' } )
 	gt( [ { num1: 2 }, { $any: [ { num2: 1 }, { num3: 2 } ] } ] ).
-	regex( { str1: 'fir.*/i' } ).
-	eq( { num1: 2, str2: 'hello' } );
+	gte( [ { num1: 2 }, { num2: 5 } ] ).
+	in( { num1: ['2', '1'] } )
+	lt( { num1: 2 } ).
+	lte( { num1: 2 } ).
+	ne( { num1: 2 } ).
+	not( { str1: 'test' } ).
+	regex( { str1: 'fir.*/i' } );
 
 ```
 
-###Match
+### Match
 Run all expression searches in the queue
 ```
 Match.match()
 ```
 
-###Select Expression Match
+### Select Expression Match
 Run a single Expression search from the queue
-```
+```javascript
+
 Match.regex({str2: { $regex: 'hel.*/i'}});
 var ret = Match.$regex();
 
 /* All return boolean true/false */
-Match.$add();
+Match.$and();
 Match.$any(); 
-Match.$or();
-Match.$lte();
-Match.$lt();
-Match.$gte();
-Match.$gt();
-Match.$regex();
 Match.$eq();
+Match.$gt();
+Match.$gte();
+Match.$in();
+Match.$lt();
+Match.$lte();
+Match.$ne();
+Match.$not();
+Match.$or();
+Match.$regex();
 
 ```
 
-###Custom Selector and Comparer
+### Custom Selector and Comparer
 in progress
 
 ###Usage
 
-###Keystone dependsOn
+### Keystone dependsOn
 ```
 var Tester = new keystone.List('Tester');
 
@@ -126,7 +148,7 @@ Tester.add({
 Tester.register();
 
 ```
-###Examples
+### Examples
 ```
 var ExMatch = require('exmatch');
 
@@ -169,16 +191,16 @@ var ExMatch = require('exmatch');
 
 ```
 
-###Testing
+### Testing
 Test file located in `test` dir
 ```
 npm i -g mocha
 
-mocha
+npm test
 
 ```
 
 
-###License
+### License
 MIT License
 

@@ -1,6 +1,6 @@
 {
   "name": "expression-match",
-  "version": "0.0.15",
+  "version": "0.0.16",
   "private": false,
   "description": "expression comparison",
   "main": "./ExMatch.js",
@@ -9,9 +9,11 @@
     "url": "https://github.com/inquisive/expression-match"
   },
   "dependencies": {
-    "lodash": "3.10.x"
+    "lodash": "4.11.1"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "must": "^0.13.1"
+  },
   "engines": {
     "node": ">=0.10.22",
     "npm": ">=1.3.14"
@@ -28,7 +30,7 @@
   "bugs": {
     "url": "https://github.com/inquisive/expression-match/issues"
   },
-  "scripts": {},
-  "_id": "exmatch@0.0.13",
-  "_from": "exmatch@0.0.12"
+  "scripts": {
+    "test": "mocha ./test/ExMatch.js"
+  }
 }
