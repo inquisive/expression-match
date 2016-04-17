@@ -16,6 +16,7 @@
 		- [Keystone dependsOn](#keystone-dependson)
 		- [Examples](#examples)
 	- [Testing](#testing)
+	- [History](https://github.com/inquisive/expression-match/blob/master/HISTORY.md)  
 	- [License](#license)
 
 
