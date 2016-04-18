@@ -73,8 +73,10 @@ var patterns = {
  * */
  
 // `options.expression` changes the default expression which is `$and`.  
-var Match = new ExMatch( patterns.e2, matchAgainst, { debug: true, expression: '$or' });
+var Match = new ExMatch( patterns.e2, searchFields, { debug: true, expression: '$and' });  
 
+// debig messages only.  
+var Match = new ExMatch( patterns.e3, searchFields, true);
 ```
 
 ### Add Patterns
