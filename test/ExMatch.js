@@ -33,12 +33,45 @@ before(function() {
 				or:['string1', 'string']
 			},
 			or:[ 
-				{ check1: 'true' }
+				{ check1: 'true' },
+				{ check5: false }
 			],
 			num2:'2', 
 			num1: { 
 				$lt: 2
 			}
+		},
+		test: { num3: { $lte: 3 } },
+		trueplainarrayofexp: {
+			str3: [
+				{ or: ['plug1', 'plug'] }
+			]
+		},
+		truetest01: { 
+			$gt: { 
+				num3: 1 
+			}, 
+			$and:[
+				{ num1: 1 },
+				{ str3: { or: ['cork','clog','plug'] } },
+				{ num2: { 
+						$lt: 4 
+					}
+				}
+			] 
+		},
+		falsetest01: { 
+			$gt: { 
+				num3: 1 
+			}, 
+			$and:[
+				{ num1: '1' },
+				{ str3: ['cork','clog','plug'] },
+				{ num2: { 
+						$lt: 4 
+					}
+				}
+			] 
 		},
 		e02: { str1: { or:['string','third']} },
 		e1: { or:[ {str1:['string','third']} , {check1:'false'} ] },
@@ -47,7 +80,7 @@ before(function() {
 		e4: { gt:[{num3:1}],$and:[{num1:1},{str2:'hello'},{num2:{$lt:4}}] },
 		e5: { or:[ {num1:{$gte:1}} , {num2:{$lte:1}} ] },
 		truesinglevalue: { num2:['2', '1'] },
-		truearrayvalue: { str4:['2', '1'] },
+		truearrayvalue: { str4: ['2'] },
 		e66: { $ne:[{num2:[2,1]}]},
 		e7: { $not:{num2:1} },
 		e007: { $gt:[{num3:1}],$and:[{num1:1},{str1:['string','third']},{num2:{$lt:4}}] },
@@ -143,6 +176,24 @@ describe('FALSE', function() {
 
 
 describe('TRUE', function() {
+		
+		it('custom tester', function() {
+			var test = new ExMatch(searchPatterns.test, searchFields, false).match();
+			demand(test).be.true();
+			truetest01 = undefined;
+		});
+		
+		it('testing truths', function() {
+			var truetest01 = new ExMatch(searchPatterns.truetest01, searchFields, true).match();
+			demand(truetest01).be.true();
+			truetest01 = undefined;
+		});
+		
+		it('plain key with array of expressions', function() {
+			var trueplainarrayofexp = new ExMatch(searchPatterns.trueplainarrayofexp, searchFields, false).match();
+			demand(trueplainarrayofexp).be.true();
+			trueplainarrayofexp = undefined;
+		});
 		
 		it('plain key with or as object', function() {
 			/* debug is true instead of false in ExMatch */
