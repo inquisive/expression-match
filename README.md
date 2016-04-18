@@ -85,7 +85,7 @@ Each method returns `this` for chainability
 Match.
 	addSearchParams( patterns.e3 ).
 	and( patterns.e1 ).
-	any( patterns.e2 ).
+	any( patterns.e3 ).
 	eq( { num1: 2, str2: 'hello' } )
 	gt( [ { num1: 2 } ] ).
 	gte( [ { num1: 2 }, { num2: 5 } ] ).
