@@ -41,7 +41,7 @@ before(function() {
 				$lt: 2
 			}
 		},
-		test: { num3: { $lte: 3 } },
+		test: { gte: [ { num1: 1 }, { num3: 2 } ] },
 		trueplainarrayofexp: {
 			str3: [
 				{ or: ['plug1', 'plug'] }
@@ -178,13 +178,13 @@ describe('FALSE', function() {
 describe('TRUE', function() {
 		
 		it('custom tester', function() {
-			var test = new ExMatch(searchPatterns.test, searchFields, false).match();
+			var test = new ExMatch(searchPatterns.test, searchFields, true).match();
 			demand(test).be.true();
 			truetest01 = undefined;
 		});
 		
 		it('testing truths', function() {
-			var truetest01 = new ExMatch(searchPatterns.truetest01, searchFields, true).match();
+			var truetest01 = new ExMatch(searchPatterns.truetest01, searchFields, false).match();
 			demand(truetest01).be.true();
 			truetest01 = undefined;
 		});
