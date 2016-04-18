@@ -42,11 +42,28 @@ npm install expression-match
 ```javascript
 var ExMatch = require('expression-match');
 
+var searchFields = {
+	str1: 'string',
+	str2: 'hello',
+	str3: 'plug',
+	str4: ['1','2'],
+	num1: 1,
+	num2: '2',
+	num3: '3',
+	check1:'true',
+	check2: false,
+	check3: undefined,
+	check4: 0,
+	check5: true,
+	check6: 'false'
+}
 var patterns = {
-	e1: { $or:[ { sel1:['first','third'] } , {check1:true} ] },
-	e2: { $gt: { num3:1 }, $and:[{num1:'1'}, {sel1:['first','third']}, {num2:{$lt:4}}] },
-	e3: { sel1: ['second', 'third'], str3: { $regex: 'fir.*/i' } },
+	// true
+	e1: { $or:[ { str1:['first','third'] } , {check1: 'true'} ] },
+	e2: { $gt: { num3:1 }, $and:[{num1:'1'}, {str3: { or: ['cork','clog','plug'] } }, {num2:{$lt:4}}] },
+	e3: { str2: ['hi', 'hello'], str3: { $regex: 'plu.*/i' } },
 	e4: { num3: { $lte: 3 } },
+	e5: { str1: [{ or: 'strings' }, { or: 'string'}] },
 }
 
 /* debug can be any truthy or 2 for compare only
@@ -56,8 +73,10 @@ var patterns = {
  * */
  
 // `options.expression` changes the default expression which is `$and`.  
-var Match = new ExMatch( patterns.e2, matchAgainst, { debug: true, expression: '$or' });
+var Match = new ExMatch( patterns.e2, searchFields, { debug: true, expression: '$and' });  
 
+// debig messages only.  
+var Match = new ExMatch( patterns.e3, searchFields, true);
 ```
 
 ### Add Patterns
@@ -66,9 +85,9 @@ Each method returns `this` for chainability
 Match.
 	addSearchParams( patterns.e3 ).
 	and( patterns.e1 ).
-	any( patterns.e2 ).
+	any( patterns.e3 ).
 	eq( { num1: 2, str2: 'hello' } )
-	gt( [ { num1: 2 }, { $any: [ { num2: 1 }, { num3: 2 } ] } ] ).
+	gt( [ { num1: 2 } ] ).
 	gte( [ { num1: 2 }, { num2: 5 } ] ).
 	in( { num1: ['2', '1'] } )
 	lt( { num1: 2 } ).

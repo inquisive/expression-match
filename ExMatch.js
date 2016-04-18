@@ -18,6 +18,8 @@ var expressions = [
 	'truthy', // in development
 ];
 
+var dashes = '\n----------------------------------------\n';
+
 /**
  * Calling the module directly returns a new ExMatch instance
  * 
@@ -161,13 +163,13 @@ _.extend(ExMatch.prototype, {
 		var setSearchObject = _setSearchObject.bind(this);
 		
 		if (this.debug) {
-			console.log('match', match);
+			console.log(dashes, 'CREATE NEW MATCH SEARCHES', dashes, match);
 		}
 		/* loop thorugh the root keys and create the _search list for the comparer */
 		_.each(match, _.bind(function(val, key) {
 			
 			if (this.debug) {
-				console.log('match value expression', key, this.isExp(key));
+				console.log(dashes, 'isExp', key, this.isExp(key));
 			}
 			
 			var exp = this.isExp(key);
@@ -179,11 +181,11 @@ _.extend(ExMatch.prototype, {
 				
 				var keepTheStrings = [];
 				if(this.debug) {
-					console.log('val ' + val, key);
+					console.log('ALL match items for ' + key, val);
 				}
 				_.every(val, _.bind(function(item, newkey) {
 					if(this.debug) {
-						console.log('every val ' + newkey, item);
+						console.log('Add item to search for ' + newkey, item);
 					}
 					
 					if(this.isExp(newkey)) {
@@ -191,7 +193,7 @@ _.extend(ExMatch.prototype, {
 						var exp = this.isExp(newkey);
 						
 						if(this.debug) {
-							console.log('reWrap ' + exp, item, key);
+							console.log('reWrap item for ' + exp, key, item);
 						}
 						var olditem = {};
 						olditem[exp] = item;
@@ -200,17 +202,24 @@ _.extend(ExMatch.prototype, {
 						
 					} else if(_.isString(item)) {
 						if(this.debug) {
-							console.log('is a string ', item);
+							console.log('item is a string ', item);
 						}
 						/* save the strings for an $in */
 						keepTheStrings.push(item);
 						
 					} else {
-						exp = this.defaults.expression
+						if(_.isObject(item)) {
+							exp = this.isExp(_.keys(item)[0]);
+							if(!exp) {
+								return true;
+							}
+						} else {
+							exp = this.defaults.expression
+						}
 						var newObj = {}
 						newObj[key] = item;
 						if(this.debug) {
-							console.log('pushExp ' + exp, newObj, key);
+							console.log('SEND item to pushExp for ' + exp, key, newObj);
 						}
 						_pushExp.call(this, exp, newObj);
 					}
@@ -224,14 +233,16 @@ _.extend(ExMatch.prototype, {
 					newObj[newExp] = {};
 					newObj[newExp][key] = keepTheStrings;
 					if(this.debug) {
-						console.log('pushExp a new $or from Array strings ' + newExp, newObj, key);
+						console.log('SEND to pushExp from Array strings for ' + newExp, key, newObj);
 					}
 					_pushExp.call(this, newExp, newObj);
 				}
 				
 				
 			} else {
-				
+				if(this.debug) {
+					console.log('SEND to pushExp: ', val);
+				}
 				_pushExp.call(this, exp, val);
 			}
 			
@@ -254,7 +265,7 @@ _.extend(ExMatch.prototype, {
 							obj = ret;
 						}
 						if (this.debug) {
-							console.log('push from ' + key + ' Array', obj);
+							console.log('PUSH Array for ' + key , obj);
 						}
 						pushVal(exp, obj, key);
 						
@@ -266,13 +277,13 @@ _.extend(ExMatch.prototype, {
 					var retObj = {}
 					retObj[key] = val;
 					if(this.debug) {
-						console.log('push plain value',retObj);
+						console.log('PUSH plain value',retObj);
 					}
 					pushVal(exp, retObj, key);
 					
 				} else if(_.isObject(val)) {
 					if(this.debug) {
-						console.log('push object',val);
+						console.log('PUSH object',val);
 					}
 					pushVal(exp, val, key);
 				}
@@ -336,7 +347,7 @@ _.extend(ExMatch.prototype, {
 			var innerObject = ( innerKey ) ? obj[key][innerKey] : false;
 			
 			if (this.debug) {
-				console.log('check for $comparer', key, exp, obj);
+				console.log('custom $comparer:',  _.isFunction(obj.$comparer), 'custom $selector:', _.isFunction(obj.$selector) );
 			}
 			/* Still working on the $selector and $comparer  */
 			if (key === '$selector') {
@@ -353,14 +364,14 @@ _.extend(ExMatch.prototype, {
 				 *  
 				 * */
 				if (this.debug) {
-					console.log(exp,'Array inside plain, wrap each as ' + exp, obj[key], key, innerKey,  innerObject);
+					console.log('Array inside plain, wrap each as ' + exp, obj[key], key, innerKey,  innerObject);
 				}
 								
 				obj[key].forEach(function(rewrite) {
 					var newObj = {};
 					newObj[key] = rewrite;
 					if (this.debug) {
-						console.log('push ' + exp, newObj);
+						console.log('Add search ' + exp, newObj);
 					}
 					this._search[exp].search.push(newObj);
 				}.bind(this));
@@ -369,7 +380,7 @@ _.extend(ExMatch.prototype, {
 			} else if ( this.isExp(key) ) {
 				/* top level expression so create a new match */
 				if (this.debug) {
-					console.log(exp,'new top expression:', key,  obj);
+					console.log('ADD search for new top expression as $match ' + exp, obj);
 				}
 				if ( !isObject ) {
 					var obj = _reWrap.call(this, parentKey, obj);
@@ -383,7 +394,7 @@ _.extend(ExMatch.prototype, {
 				var newObj = _reWrap.call(this, key, obj[key]);				 
 				
 				if (this.debug) {
-					console.log(exp,'new expression inside:', key,  newObj);
+					console.log('ADD search for inner exp as $match ' + exp, newObj);
 				}
 		
 				this._search[exp].search.push({'$match': new ExMatch(newObj, this.searchFields, this._debug)});
@@ -398,7 +409,7 @@ _.extend(ExMatch.prototype, {
 				var pExp = this.isExp(parentKey);
 				 
 				if (this.debug) {
-					console.log(parentKey,'Array inside plain, wrap each as ' + pExp, obj[key], key, exp,  innerObject, innerKey);
+					console.log('Array inside plain, wrap each as ' + pExp, key, obj[key]);
 				}
 								
 				obj[key].forEach(function(rewrite) {
@@ -414,7 +425,7 @@ _.extend(ExMatch.prototype, {
 			} else {
 				/*  regular item push onto the search array */
 				if (this.debug) {
-					console.log(exp,'add match', key,  obj);
+					console.log('ADD search for ' + exp, key,  obj);
 				}
 				this._search[exp].search.push(obj);
 			}
@@ -439,7 +450,7 @@ _.extend(ExMatch.prototype, {
 			
 			if(!_.isArray(val.search) || val.search.length < 1) {
 				if(this.debug || this.debugComparison) {
-					console.log('val.search is array.. return true', val.search, val);
+					console.log('val.search is not an array.. return true', val.search, val);
 				}
 				return true;
 			}			
@@ -452,7 +463,7 @@ _.extend(ExMatch.prototype, {
 		}, this));
 		
 		if(this.debug || this.debugComparison) {
-			console.log(_.keys(this._match) + ' final return = ' + ret);
+			console.log(_.keys(this._match) + ' final return = ' + ret, dashes);
 		}
 		
 		return ret;
@@ -473,6 +484,10 @@ _.extend(ExMatch.prototype, {
 	 * return boolean
 	 */
 	 selector: function(lodashLoopFunction, search, searchFields){
+		
+		if(this.debug) {
+			console.log(dashes, 'START SEARCH COMPARE', dashes);
+		}
 		
 		/* we pass this as reference the entire chain so save our originals */
 			this._current = {
@@ -495,7 +510,7 @@ _.extend(ExMatch.prototype, {
 				/* run the proper method and return */
 				var ret2 =  lodashLoopFunction(val, _.bind(this.comparer, this));
 				if(this.debug) {
-					console.log(search.exp, 'fn selector', search.search, ret2);
+					//console.log(search.exp, ' RESULT for', search.search, ret2);
 				}
 				return ret2;
 				
@@ -503,7 +518,7 @@ _.extend(ExMatch.prototype, {
 			
 		}
 		if(this.debug) { 
-			console.log(search.exp, 'return selector', ret);
+			console.log('FINAL RESULT for ' + search.exp, ret);
 		}
 		return ret;
 	},
@@ -521,7 +536,7 @@ _.extend(ExMatch.prototype, {
 		if(key === '$match') {
 			/* $match keys contain a new ExMatch instance so run match */
 			if (this.debug) {
-				console.log(this._current.exp, 'run ExMatch instance match()');
+				console.log('RUN NEW ExMatch instance match()', this._current.exp);
 			}
 			return val.match();
 			
@@ -529,7 +544,7 @@ _.extend(ExMatch.prototype, {
 			
 			if (this.searchFields[key] === undefined) {
 				if(this.debug || this.debugComparison) {
-					console.info(this._current.exp.toUpperCase() + ' SKIP COMPARE: searchFields['+key+'] = ', this.searchFields[key], val, key);
+					console.info(this._current.exp.toUpperCase() + ' SKIPPED COMPARE: searchFields['+key+'] = ', this.searchFields[key], val, key);
 				}
 				
 				return false;
@@ -551,14 +566,14 @@ _.extend(ExMatch.prototype, {
 				/* we want an Array of objects */	
 				var matches = ensureArray(val);
 				if(this.debug) {
-					console.log('check for matches:', matches, val, 'in', this.searchFields[key]);
+					//console.log('check for matches:', matches, 'in', this.searchFields[key]);
 				}
 				/* does the matches array have any true outcomes */
 				var ret = _.includes(matches, this.searchFields[key]);
 			}
 			
 			if(this.debug || this.debugComparison) {
-				console.log(this._current.exp.toUpperCase() + ' COMPARE: ' + ret.toString().toUpperCase(), ' compared ' + val, ' with ',  this.searchFields[key], ' from ',  key);
+				console.log(this._current.exp.toUpperCase() + ' COMPARED: ' + ret.toString().toUpperCase(), ' compared ' + val, ' with ',  this.searchFields[key], ' from ',  key);
 			}
 			return ret;
 		}	
