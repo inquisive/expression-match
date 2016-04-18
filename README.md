@@ -87,7 +87,7 @@ Match.
 	and( patterns.e1 ).
 	any( patterns.e2 ).
 	eq( { num1: 2, str2: 'hello' } )
-	gt( [ { num1: 2 }, { $any: [ { num2: 1 }, { num3: 2 } ] } ] ).
+	gt( [ { num1: 2 } ] ).
 	gte( [ { num1: 2 }, { num2: 5 } ] ).
 	in( { num1: ['2', '1'] } )
 	lt( { num1: 2 } ).
