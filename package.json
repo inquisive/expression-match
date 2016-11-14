@@ -9,7 +9,7 @@
     "url": "https://github.com/inquisive/expression-match"
   },
   "dependencies": {
-    "lodash": "4.16.5"
+    "lodash": "4.17.0"
   },
   "devDependencies": {
     "must": "^0.13.1"
