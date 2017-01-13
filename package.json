@@ -12,7 +12,7 @@
     "lodash": "4.16.5"
   },
   "devDependencies": {
-    "must": "^0.13.1"
+    "must": "^0.13.4"
   },
   "engines": {
     "node": ">= 4",
